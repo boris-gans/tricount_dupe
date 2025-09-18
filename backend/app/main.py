@@ -19,3 +19,8 @@ app.add_middleware(
 @app.get("/")
 def read_root():
     return {"message": "running"}
+
+# PostgreSQL connection
+# use sqlalchemy for schema def and easy interactions
+# basic math and CRUD operations will live on seperate classes
+# want to leave main.py open for authentication + jwt stuff if I choose to expand
