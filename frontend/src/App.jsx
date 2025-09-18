@@ -10,7 +10,11 @@ function App() {
   const [msg, setMsg] = useState("")
 
   useEffect(() => {
-    getMessage().then(data => setMsg(data.message));
+    const interval = setInterval(() => {
+      getMessage().then(data => setMsg(data.message));
+    }, 5000); //refresh msg every 5 seconds
+
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -26,7 +30,7 @@ function App() {
       <h1>Tricount!</h1>
       <div className="card">
         <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+          count is {count} and msg is {msg}
         </button>
         <p>
           {msg}
