@@ -1,8 +1,9 @@
+# ENTRY POINT; init app, middleware + routers only
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # fix linting
-
-# ENTRY POINT; init app, middleware + routers only
+from app.db.session import get_db
 
 
 app = FastAPI()
@@ -20,9 +21,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# @app.get("/")
+# def read_root():
+#     return {"message": "running"}
+
 @app.get("/")
-def read_root():
-    return {"message": "running"}
+def init_db():
+    if get_db():
+        return {"message": "db up"}
+    else:
+        return {"message": "db down"}
+
 
 # PostgreSQL connection
 # use sqlalchemy for schema def and easy interactions

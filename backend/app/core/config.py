@@ -1,5 +1,5 @@
 # basic settings; db url, env vars
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     database_user: str
