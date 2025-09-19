@@ -1,0 +1,1 @@
+# logic for creating groups; eg. only unique users per group, max amount, etc.

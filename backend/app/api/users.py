@@ -1,0 +1,1 @@
+# translate pure HTTP --> user class

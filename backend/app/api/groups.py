@@ -1,0 +1,1 @@
+# translates pure http --> group class

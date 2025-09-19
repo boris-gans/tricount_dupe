@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # fix linting
 
+# ENTRY POINT; init app, middleware + routers only
+
+
 app = FastAPI()
 
 origins = [

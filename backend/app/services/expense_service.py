@@ -1,0 +1,1 @@
+# math logic for splitting an expense between users, within a group
