@@ -10,3 +10,4 @@ frontend/vite.config.js
 .venv
 
 *.svg
+.env
