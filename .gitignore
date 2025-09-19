@@ -1,0 +1,12 @@
+*.json
+
+**/__pycache__
+__pycache__/
+
+frontend/eslint.config.js
+frontend/vite.config.js
+
+
+.venv
+
+*.svg
