@@ -3,8 +3,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import SQLAlchemyError
 
-from .base import Base
+from app.db.base import Base
 from app.core.config import settings
+from app.db import models
 
 engine = create_engine(settings.database_url, echo=False)
 Base.metadata.create_all(engine) #create tables if it doesn't exist

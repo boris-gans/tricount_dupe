@@ -27,7 +27,9 @@ app.add_middleware(
 
 @app.get("/")
 def init_db():
-    if get_db():
+    session = get_db()
+
+    if session is not None:
         return {"message": "db up"}
     else:
         return {"message": "db down"}
