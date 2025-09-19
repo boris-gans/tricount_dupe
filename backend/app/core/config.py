@@ -1,14 +1,16 @@
 # basic settings; db url, env vars
 from pydantic import BaseSettings
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
 
 class Settings(BaseSettings):
-    DATABASE_USER = os.getenv("DATABASE_USER")
-    DATABASE_PW = os.getenv("DATABASE_PW")
-    DATABASE_NAME = os.getenv("DATABASE_NAME")
-    DATABASE_URL = f"postgresql+psycopg2://{DATABASE_USER}:{DATABASE_PW}@localhost:5432/{DATABASE_NAME}"
+    database_user: str
+    database_pw: str
+    database_name: str
+
+    @property
+    def database_url(self): #to build url from env
+        return f"postgresql+psycopg2://{self.database_user}:{self.database_pw}@localhost:5432/{self.database_name}"
+
+    class Config: #use pydantic to load variables from .env
+        env_file = ".env"
 
 settings = Settings()
