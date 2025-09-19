@@ -44,3 +44,4 @@ class Expense(Base):
     photo_url = Column(String) #if i want to add image storage
 
     group = relationship("Group", back_populates="expenses")
+    # NEED TO MAP THIS TO USER ID ALSO; either include here or new table (better I think)
