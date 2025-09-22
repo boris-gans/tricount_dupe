@@ -23,6 +23,7 @@ class Group(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String, nullable=False)
+    pw = Column(String, nullable=False)
     emoji = Column(Text) #emoji code; the icon representing group
 
     members = relationship("User", secondary="group_members", back_populates="groups")
@@ -43,5 +44,21 @@ class Expense(Base):
     description = Column(String)
     photo_url = Column(String) #if i want to add image storage
 
+    group_id = Column(Integer, ForeignKey("group.id"), nullable=False)
+    paid_by_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
     group = relationship("Group", back_populates="expenses")
-    # NEED TO MAP THIS TO USER ID ALSO; either include here or new table (better I think)
+    paid_by = relationship("User")
+
+    splits = relationship("ExpenseSplit", back_populates="expense", cascade="all, delete-orphan")
+
+class ExpenseSplit(Base):
+    __tablename__ = "expense_split"
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    expense_id = Column(Integer, ForeignKey("expense.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
+    amount = Column(Float, nullable=False)
+
+    expense = relationship("Expense", back_populates="splits")
+    user = relationship("User")

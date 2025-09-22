@@ -1,9 +1,10 @@
 # pydantic models
     # validates incoming request bodies + controlls what field is sent back 
 from pydantic import BaseModel
+from typing import Optional, List
 
-class UserIn(BaseModel):
-    # id: int
+# new user signup
+class UserCreate(BaseModel):
     name: str
     pw: str
     email: str
@@ -11,30 +12,82 @@ class UserIn(BaseModel):
 class UserOut(BaseModel):
     id: int
     name: str
-    # no need for password?
-    email: str
+    #limit this info as it gets re-used for public stuff
 
     class Config:
         orm_mode = True
+
+
     
-class GroupIn(BaseModel):
-    user_id: int
-    name: str
-    emoji: str
-
-class GroupOut(BaseModel):
-    id: int
-    user_id: int
-    name: str
-    emoji: str
-    # also: list of other group members (name, balance and id's)
-    # also: list of all expenses by that group ()
-
-class ExpenseIn(BaseModel):
+class ExpenseSplitIn(BaseModel):
     user_id: int
     amount: float
-    description: str
-    photo_url: str
-    # need to include user_id and group_id
+
+# new expense
+class ExpenseCreate(BaseModel):
+    paid_by_id: int #a user id
+    group_id: int
+
+    amount: float
+    description: Optional[str]
+    photo_url: Optional[str]
+    splits: List[ExpenseSplitIn]
+
+# encapsulate splits in the expense_split table
+class ExpenseSplitOut(BaseModel):
+    user: UserOut
+    amount: float
+
+    class Config:
+        orm_mode = True
+
+# list all splits for one expense
+class ExpenseOut(BaseModel):
+    id: int
+    amount: float
+    description: Optional[str]
+    photo_url: Optional[str]
+
+    paid_by: UserOut
+    splits: List[ExpenseSplitOut]
+
+    class Config:
+        orm_mode = True
 
 
+
+#creating a new group
+class GroupCreate(BaseModel):
+    user_id: int
+    name: str
+    pw: str
+    emoji: Optional[str]
+
+#joining an existing group (for now just name + pw, later we can do a link or smth)
+class GroupJoinIn(BaseModel):
+    user_id: int
+    group_id: int
+    pw: str
+
+#info received when you click on an actual group
+class GroupOut(BaseModel):
+    id: int
+    name: str
+    emoji: Optional[str]
+    members: List[UserOut]
+    expenses: List[ExpenseOut]
+
+    class Config:
+        orm_mode = True
+
+class GroupShortOut(BaseModel):
+    id: int
+    name: str
+    emoji: Optional[str]
+
+
+# need a user login; should return all groups and the shorthand info (just name, id, emoji)
+class UserSummaryOut(BaseModel):
+    id: int
+    name: str
+    groups: List[GroupShortOut]
