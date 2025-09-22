@@ -9,6 +9,11 @@ class UserCreate(BaseModel):
     pw: str
     email: str
 
+# generic model for inputting a user (user_id)
+class UserIn(BaseModel):
+    id: int
+    name: str
+
 class UserOut(BaseModel):
     id: int
     name: str
@@ -60,14 +65,14 @@ class ExpenseOut(BaseModel):
 class GroupCreate(BaseModel):
     user_id: int
     name: str
-    pw: str
+    group_pw: str
     emoji: Optional[str]
 
 #joining an existing group (for now just name + pw, later we can do a link or smth)
 class GroupJoinIn(BaseModel):
     user_id: int
     group_id: int
-    pw: str
+    group_pw: str
 
 #info received when you click on an actual group
 class GroupOut(BaseModel):

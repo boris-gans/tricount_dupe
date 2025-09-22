@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 # fix linting
 from app.db.session import get_db
+from app.api import users, groups, expenses
 
 
 app = FastAPI()
@@ -20,6 +21,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(users.router, prefix="/users", tags=["users"])
+app.include_router(groups.router, prefix="/groups", tags=["groups"])
+app.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
+
 
 # @app.get("/")
 # def read_root():
