@@ -40,10 +40,11 @@ This approach balances planning with flexibility, which works best for my workfl
 
 ---
 
+
 ## Database Design
 Below is where the **Entity Relationship Diagram (ERD)** will be added to illustrate the database structure:
 
-![ERD Placeholder](./docs/erd.png)
+![ERD Placeholder](docs/erd_1.png)
 
 For reference, the database is implemented with:
 - **Pydantic Schemas** for data validation [View Pydantic Schema](./backend/app/db/schemas.py)
