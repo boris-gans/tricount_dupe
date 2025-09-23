@@ -1,6 +1,6 @@
 # for later; jwt + pw hashing
-from fastapi import HTTPException, Depends # type: ignore
-from passlib.context import CryptContext # type: ignore
+from fastapi import HTTPException, Depends
+from passlib.context import CryptContext
 from datetime import datetime, timezone, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
