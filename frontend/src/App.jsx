@@ -1,121 +1,137 @@
-import { useEffect, useState } from 'react'
-import { getMessage, createUser, createGroup } from './services/api'
-
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom'
 import './App.css'
+import { useAuth } from './AuthContext.jsx'
 
-function App() {
-  const [count, setCount] = useState(0)
-  const [msg, setMsg] = useState("")
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth()
+  if (!isAuthenticated) return <Navigate to="/login" replace />
+  return children
+}
 
-  const [userId, setUserId] = useState("")
-  
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [pw, setPw] = useState("")
-  const [message, setMessage] = useState("")
-
-  const [groupName, setGroupName] = useState("")
-  const [groupPw, setGroupPw] = useState("")
-  const [emoji, setEmoji] = useState("")
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      getMessage().then(data => setMsg(data.message));
-    }, 5000); //refresh msg every 5 seconds
-
-    return () => clearInterval(interval);
-  }, []);
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    try {
-      const user = createUser({ name, email, pw });
-      const userId = localStorage.getItem("userId");
-      setMessage(`User created: ${user.name} (id: ${userId})`);
-    } catch (error) {
-      setMessage(error.message)
-    }
+function Navbar() {
+  const { isAuthenticated, logout } = useAuth()
+  const navigate = useNavigate()
+  function handleLogout() {
+    logout()
+    navigate('/')
   }
-
-  async function handleGroupSubmit(e) {
-    e.preventDefault();
-    try {
-      const group = createGroup({ groupName, groupPw, userId, emoji });
-      setMessage(`Group created: ${group.name} (id: ${userId})`);
-    } catch (error) {
-      setMessage(error.message)
-    }
-  }
-
   return (
-    <>
-      <h1>Tricount!</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count} and msg is {msg}
-        </button>
-        <p>
-          {msg}
-        </p>
-      </div>
-      <div>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-          />
-          <br />
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-          />
-          <br />
-          <input
-            type="password"
-            placeholder="Password"
-            value={pw}
-            onChange={e => setPw(e.target.value)}
-          />
-          <br />
-          <button type="submit">Create User</button>
-        </form>
-        <p>{message}</p>
-      </div>
-      <div>
-        <form onSubmit={handleGroupSubmit}>
-          <input
-            type="text"
-            placeholder="Group Name"
-            value={groupName}
-            onChange={e => setGroupName(e.target.value)}
-          />
-          <br />
-          <input
-            type="password"
-            placeholder="Group PW"
-            value={groupPw}
-            onChange={e => setGroupPw(e.target.value)}
-          />
-          <br />
-          <input
-            type="text"
-            placeholder="Emoji"
-            value={emoji}
-            onChange={e => setEmoji(e.target.value)}
-          />
-          <br />
-          <button type="submit">Create Group</button>
-        </form>
-        <p>{message}</p>
-      </div>
-    </>
+    <nav className="nav">
+      <Link to="/" className="brand">tricount-dupe</Link>
+      <div className="spacer" />
+      {isAuthenticated ? (
+        <>
+          <Link to="/account">Account</Link>
+          <button className="btn" onClick={handleLogout}>Logout</button>
+        </>
+      ) : (
+        <>
+          <Link to="/login">Login</Link>
+          <Link to="/signup" className="btn">Sign up</Link>
+        </>
+      )}
+    </nav>
   )
 }
 
-export default App
+function Landing() {
+  return (
+    <div className="container">
+      <h1>Split expenses the simple way</h1>
+      <p>Track, share and settle group expenses with ease.</p>
+      <div className="actions">
+        <Link to="/signup" className="btn primary">Get started</Link>
+        <Link to="/login" className="btn">Log in</Link>
+      </div>
+    </div>
+  )
+}
+
+function Login() {
+  const { login, isLoading } = useAuth()
+  const navigate = useNavigate()
+  async function onSubmit(e) {
+    e.preventDefault()
+    const form = new FormData(e.currentTarget)
+    const email = form.get('email')
+    const pw = form.get('pw')
+    try {
+      await login({ email, pw })
+      navigate('/account')
+    } catch (err) {
+      alert(err.message || 'Login failed')
+    }
+  }
+  return (
+    <div className="auth-card">
+      <h2>Log in</h2>
+      <form onSubmit={onSubmit}>
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="pw" type="password" placeholder="Password" required />
+        <button className="btn primary" disabled={isLoading} type="submit">{isLoading ? 'Loading…' : 'Log in'}</button>
+      </form>
+      <p className="muted">No account? <Link to="/signup">Sign up</Link></p>
+    </div>
+  )
+}
+
+function Signup() {
+  const { signup, isLoading } = useAuth()
+  const navigate = useNavigate()
+  async function onSubmit(e) {
+    e.preventDefault()
+    const form = new FormData(e.currentTarget)
+    const name = form.get('name')
+    const email = form.get('email')
+    const pw = form.get('pw')
+    try {
+      await signup({ name, email, pw })
+      navigate('/account')
+    } catch (err) {
+      alert(err.message || 'Signup failed')
+    }
+  }
+  return (
+    <div className="auth-card">
+      <h2>Create your account</h2>
+      <form onSubmit={onSubmit}>
+        <input name="name" type="text" placeholder="Name" required />
+        <input name="email" type="email" placeholder="Email" required />
+        <input name="pw" type="password" placeholder="Password" required />
+        <button className="btn primary" disabled={isLoading} type="submit">{isLoading ? 'Creating…' : 'Sign up'}</button>
+      </form>
+      <p className="muted">Already have an account? <Link to="/login">Log in</Link></p>
+    </div>
+  )
+}
+
+function Account() {
+  const userId = localStorage.getItem('userId')
+  // Later: fetch groups for user using token.
+  return (
+    <div className="container">
+      <h1>Your groups</h1>
+      <p className="muted">User ID: {userId}</p>
+      <div className="card-row">
+        <button className="btn primary">Create new group</button>
+        <button className="btn">Join existing group</button>
+      </div>
+      <div className="empty">No groups yet.</div>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <div className="app">
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Landing />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </div>
+  )
+}

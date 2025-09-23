@@ -1,37 +1,84 @@
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:8000";
+
+function getStoredToken() {
+    return localStorage.getItem("token");
+}
+
+function getAuthHeaders(extraHeaders = {}) {
+    const token = getStoredToken();
+    const headers = { "Content-Type": "application/json", ...extraHeaders };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    return headers;
+}
+
+async function handleResponse(res) {
+    if (res.status === 401) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        window.location.replace("/login");
+        throw new Error("Unauthorized");
+    }
+    if (!res.ok) {
+        let message = "Request failed";
+        try {
+            const data = await res.json();
+            message = data.detail || data.message || message;
+        } catch (_) {}
+        throw new Error(message);
+    }
+    try {
+        return await res.json();
+    } catch (_) {
+        return null;
+    }
+}
+
+export async function apiGet(path) {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+        method: "GET",
+        headers: getAuthHeaders(),
+        credentials: "include",
+    });
+    return handleResponse(res);
+}
+
+export async function apiPost(path, body) {
+    const res = await fetch(`${API_BASE_URL}${path}`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        body: JSON.stringify(body),
+        credentials: "include",
+    });
+    return handleResponse(res);
+}
+
+// High-level helpers (adjust to your backend as needed)
 export async function getMessage() {
-    const res = await fetch("http://127.0.0.1:8000/")
-    return res.json
+    return apiGet("/");
 }
 
-export async function createUser(req) {
-    const res = await fetch("http://127.0.0.1:8000/users/", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(req),
-    });
-
-    if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Failed to create user");
-    }
-    
-    const data = await res.json();
-    localStorage.setItem("userId", data.id);
-
-    return res.json();
+// Signup: expects backend to return { id, token, ... }
+export async function signupUser(payload) {
+    const data = await apiPost("/users/", payload);
+    if (data?.token) localStorage.setItem("token", data.token);
+    if (data?.id) localStorage.setItem("userId", String(data.id));
+    return data;
 }
 
-export async function createGroup(req) {
-    const res = await fetch("http://127.0.0.1:8000/groups/", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify(req),
-    });
+// Login: assuming endpoint exists as /auth/login
+export async function loginUser(payload) {
+    const data = await apiPost("/auth/login", payload);
+    if (data?.token) localStorage.setItem("token", data.token);
+    if (data?.id) localStorage.setItem("userId", String(data.id));
+    return data;
+}
 
-    if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.detail || "Failed to create group");
-    }
+export async function createGroup(payload) {
+    return apiPost("/groups/", payload);
+}
 
-    return res.json();
+export function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("userId");
+    window.location.replace("/");
 }

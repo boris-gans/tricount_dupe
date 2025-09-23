@@ -9,6 +9,10 @@ class UserCreate(BaseModel):
     pw: str
     email: str
 
+class UserLogin(BaseModel):
+    email: str
+    pw: str
+
 # generic model for inputting a user (user_id)
 class UserIn(BaseModel):
     id: int

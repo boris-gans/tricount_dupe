@@ -3,9 +3,9 @@
   line-height: 1.5;
   font-weight: 400;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color-scheme: dark;
+  color: rgba(255, 255, 255, 0.92);
+  background-color: #0b0c10;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -24,8 +24,7 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  display: block;
   min-width: 320px;
   min-height: 100vh;
 }
@@ -54,15 +53,17 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
+.app { min-height: 100vh; display: flex; flex-direction: column; }
+.nav { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid #1f242d; background: #0e1117; position: sticky; top: 0; }
+.brand { font-weight: 700; color: #9ecbff; }
+.spacer { flex: 1; }
+.btn { background: #1f2937; border: 1px solid #2b3443; color: #e5e7eb; padding: 0.5rem 0.9rem; border-radius: 8px; }
+.btn.primary { background: #2563eb; border-color: #2563eb; }
+.container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+.actions { display: flex; gap: 1rem; margin-top: 1rem; }
+.auth-card { max-width: 420px; margin: 3rem auto; padding: 2rem; background: #0e1117; border: 1px solid #1f242d; border-radius: 12px; }
+.auth-card form { display: grid; gap: 0.75rem; }
+.auth-card input { background: #0b0c10; border: 1px solid #2b3443; color: #e5e7eb; padding: 0.7rem 0.8rem; border-radius: 8px; }
+.muted { color: #9aa4b2; }
+.card-row { display: flex; gap: 0.75rem; margin: 1rem 0 2rem; }
+.empty { color: #94a3b8; border: 1px dashed #2b3443; padding: 1.25rem; border-radius: 8px; }

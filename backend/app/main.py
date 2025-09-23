@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from sqlalchemy.exc import IntegrityError # type: ignore
 # fix linting (issue w interpreter): # type: ignore
 from app.db.session import get_db
-from app.api import users, groups, expenses
+from app.api import users, groups, expenses, auth
 
 
 app = FastAPI()
@@ -27,6 +27,8 @@ app.add_middleware(
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(groups.router, prefix="/groups", tags=["groups"])
 app.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
+
 
 
 # @app.get("/")
