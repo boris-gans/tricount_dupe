@@ -32,7 +32,8 @@ function App() {
     e.preventDefault();
     try {
       const user = createUser({ name, email, pw });
-      setMessage(`User created: ${user.name} (id: ${user.id})`);
+      const userId = localStorage.getItem("userId");
+      setMessage(`User created: ${user.name} (id: ${userId})`);
     } catch (error) {
       setMessage(error.message)
     }
@@ -87,7 +88,7 @@ function App() {
         <p>{message}</p>
       </div>
       <div>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleGroupSubmit}>
           <input
             type="text"
             placeholder="Group Name"
