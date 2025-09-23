@@ -59,7 +59,7 @@ export async function getMessage() {
 
 // Signup: expects backend to return { id, token, ... }
 export async function signupUser(payload) {
-    const data = await apiPost("/users/", payload);
+    const data = await apiPost("/auth/signup", payload);
     if (data?.token) localStorage.setItem("token", data.token);
     if (data?.id) localStorage.setItem("userId", String(data.id));
     return data;

@@ -5,7 +5,6 @@ class Settings(BaseSettings):
     database_user: str
     database_pw: str
     database_name: str
-
     jwt_secret_key: str
     jwt_algorithm: str
     jwt_expiration_minutes: int

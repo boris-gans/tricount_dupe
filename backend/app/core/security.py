@@ -4,11 +4,11 @@ from passlib.context import CryptContext # type: ignore
 from datetime import datetime, timezone, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-import jwt # type: ignore
+from jose import jwt
 
 from app.core.config import settings
 from app.db.session import get_db
-from app.db.schemas import User
+from app.db.models import User
 
 
 #inits
@@ -25,7 +25,7 @@ def verify_password(password: str, hashed_password: str):
 
 # jwt
 def create_access_token(user_id: str | int):
-    expire_d = settings.access_token_expire_minutes
+    expire_d = settings.jwt_expiration_minutes
     now = datetime.now(timezone.utc)
     expire = now + timedelta(minutes=expire_d)
     to_encode = {"exp": expire, "sub": str(user_id)} #always gonna use user_id for subject

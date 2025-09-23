@@ -13,6 +13,7 @@ class UserLogin(BaseModel):
     email: str
     pw: str
 
+
 # generic model for inputting a user (user_id)
 class UserIn(BaseModel):
     id: int
@@ -23,10 +24,13 @@ class UserOut(BaseModel):
     name: str
     email: str
     #limit this info as it gets re-used for public stuff
-
     class Config:
         orm_mode = True
 
+class AuthOut(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    user: UserOut
 
     
 class ExpenseSplitIn(BaseModel):
