@@ -22,8 +22,8 @@ export function AuthProvider({ children }) {
     setIsLoading(true)
     try {
       const data = await loginUser(credentials)
-      if (data?.token) setToken(data.token)
-      if (data?.id) setUserId(String(data.id))
+      if (data?.access_token) setToken(data.access_token)
+      if (data?.user?.id) setUserId(String(data.user.id))
       return data
     } finally {
       setIsLoading(false)
@@ -34,8 +34,8 @@ export function AuthProvider({ children }) {
     setIsLoading(true)
     try {
       const data = await signupUser(payload)
-      if (data?.token) setToken(data.token)
-      if (data?.id) setUserId(String(data.id))
+      if (data?.access_token) setToken(data.access_token)
+      if (data?.user?.id) setUserId(String(data.user.id))
       return data
     } finally {
       setIsLoading(false)

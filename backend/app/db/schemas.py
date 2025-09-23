@@ -3,7 +3,7 @@
 from pydantic import BaseModel # type: ignore
 from typing import Optional, List
 
-# new user signup
+# new user signup; no reuse
 class UserCreate(BaseModel):
     name: str
     pw: str
@@ -22,7 +22,6 @@ class UserIn(BaseModel):
 class UserOut(BaseModel):
     id: int
     name: str
-    email: str
     #limit this info as it gets re-used for public stuff
     class Config:
         orm_mode = True
@@ -34,12 +33,12 @@ class AuthOut(BaseModel):
 
     
 class ExpenseSplitIn(BaseModel):
-    user_id: int
+    user: UserIn
     amount: float
 
 # new expense
 class ExpenseCreate(BaseModel):
-    paid_by_id: int #a user id
+    paid_by_id: int #can be any user id, so dont rely on jwt
     group_id: int
 
     amount: float
@@ -72,14 +71,14 @@ class ExpenseOut(BaseModel):
 
 #creating a new group
 class GroupCreate(BaseModel):
-    user_id: int
+    # user_id: int  no longer needed cause jwt
     name: str
     group_pw: str
     emoji: Optional[str]
 
 #joining an existing group (for now just name + pw, later we can do a link or smth)
 class GroupJoinIn(BaseModel):
-    user_id: int
+    # user_id: int  no longer needed cause jwt
     group_id: int
     group_pw: str
 

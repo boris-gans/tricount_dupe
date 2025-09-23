@@ -57,19 +57,19 @@ export async function getMessage() {
     return apiGet("/");
 }
 
-// Signup: expects backend to return { id, token, ... }
+// Signup: expects backend to return { access_token, user: { id, name, email } }
 export async function signupUser(payload) {
     const data = await apiPost("/auth/signup", payload);
-    if (data?.token) localStorage.setItem("token", data.token);
-    if (data?.id) localStorage.setItem("userId", String(data.id));
+    if (data?.access_token) localStorage.setItem("token", data.access_token);
+    if (data?.user?.id) localStorage.setItem("userId", String(data.user.id));
     return data;
 }
 
-// Login: assuming endpoint exists as /auth/login
+// Login: expects backend to return { access_token, user: { id, name, email } }
 export async function loginUser(payload) {
     const data = await apiPost("/auth/login", payload);
-    if (data?.token) localStorage.setItem("token", data.token);
-    if (data?.id) localStorage.setItem("userId", String(data.id));
+    if (data?.access_token) localStorage.setItem("token", data.access_token);
+    if (data?.user?.id) localStorage.setItem("userId", String(data.user.id));
     return data;
 }
 
