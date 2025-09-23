@@ -72,8 +72,8 @@ For reference, the database is implemented with:
 2. **Create and activate a virtual environment**
    ```bash
    python -m venv .venv
-   source .venv/bin/activate   # On macOS/Linux
-   .venv\Scripts\activate      # On Windows
+   source .venv/bin/activate   # macOS/Linux
+   .venv\Scripts\activate      # Windows
     ```
 
 3. **Install dependencies**
