@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post("/", response_model=UserOut)
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    new_user = User(**UserCreate)
+    new_user = User(**user.dict())
     db.add(new_user)
     db.commit()
     db.refresh(new_user) #to get id

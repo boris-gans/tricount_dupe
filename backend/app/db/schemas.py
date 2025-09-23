@@ -17,6 +17,7 @@ class UserIn(BaseModel):
 class UserOut(BaseModel):
     id: int
     name: str
+    email: str
     #limit this info as it gets re-used for public stuff
 
     class Config:

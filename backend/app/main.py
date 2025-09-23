@@ -1,7 +1,9 @@
 # ENTRY POINT; init app, middleware + routers only
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import IntegrityError
 # fix linting
 from app.db.session import get_db
 from app.api import users, groups, expenses
@@ -31,7 +33,7 @@ app.include_router(expenses.router, prefix="/expenses", tags=["expenses"])
 # def read_root():
 #     return {"message": "running"}
 
-@app.get("/")
+@app.get("/db")
 def init_db():
     session = get_db()
 
@@ -39,6 +41,14 @@ def init_db():
         return {"message": "db up"}
     else:
         return {"message": "db down"}
+
+# global exception handler; any IntegrityError (data/database) will only raise this response
+@app.exception_handler(IntegrityError)
+def integrity_error_handler(request: Request, exc: IntegrityError):
+    return JSONResponse(
+        status_code=400,
+        content={"detail": "Database integrity error"}
+    )
 
 
 # PostgreSQL connection
