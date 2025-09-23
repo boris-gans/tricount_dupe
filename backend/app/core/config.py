@@ -6,6 +6,10 @@ class Settings(BaseSettings):
     database_pw: str
     database_name: str
 
+    jwt_secret_key: str
+    jwt_algorithm: str
+    jwt_expiration_minutes: int
+
     @property
     def database_url(self): #to build url from env
         return f"postgresql+psycopg2://{self.database_user}:{self.database_pw}@localhost:5432/{self.database_name}"

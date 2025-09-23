@@ -1,10 +1,16 @@
 annotated-types==0.7.0
 anyio==4.10.0
+bcrypt==4.3.0
+cffi==2.0.0
 click==8.2.1
+cryptography==46.0.1
 fastapi==0.116.2
 h11==0.16.0
 idna==3.10
+jwt==1.4.0
+passlib==1.7.4
 psycopg2==2.9.10
+pycparser==2.23
 pydantic==2.11.9
 pydantic-settings==2.10.1
 pydantic_core==2.33.2
