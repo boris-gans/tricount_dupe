@@ -1,6 +1,6 @@
 # pydantic models
     # validates incoming request bodies + controlls what field is sent back 
-from pydantic import BaseModel
+from pydantic import BaseModel # type: ignore
 from typing import Optional, List
 
 # new user signup

@@ -1,10 +1,10 @@
 # ENTRY POINT; init app, middleware + routers only
 
-from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy.exc import IntegrityError
-# fix linting
+from fastapi import FastAPI, Request # type: ignore
+from fastapi.responses import JSONResponse # type: ignore
+from fastapi.middleware.cors import CORSMiddleware # type: ignore
+from sqlalchemy.exc import IntegrityError # type: ignore
+# fix linting (issue w interpreter): # type: ignore
 from app.db.session import get_db
 from app.api import users, groups, expenses
 

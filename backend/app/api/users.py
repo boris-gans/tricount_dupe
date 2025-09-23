@@ -1,7 +1,7 @@
 # translate pure HTTP --> user class
 
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends # type: ignore
+from sqlalchemy.orm import Session # type: ignore
 
 from app.db.session import get_db
 from app.db.schemas import UserOut, UserCreate, UserSummaryOut, UserIn
