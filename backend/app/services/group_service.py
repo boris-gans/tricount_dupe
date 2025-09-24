@@ -1,1 +1,49 @@
 # logic for creating groups; eg. only unique users per group, max amount, etc.
+from sqlalchemy.orm import Session, joinedload
+from fastapi import Depends, HTTPException, status
+
+from app.db.models import Group
+from app.db.schemas import GroupOut
+from app.db.session import get_db
+
+
+def get_group_details(group_id: int, db: Session = Depends(get_db)) -> GroupOut:
+    group = (
+        db.query(Group)
+        .options(
+            joinedload(Group.members),
+            joinedload(Group.expenses)
+            .joinedload("paid_by")
+            .joinedload("splits")
+            .joinedload("user")    
+        )
+        .filter(Group.id == group_id)
+        .first()
+    )
+
+    print("GROUP DETAILS LOADED:")
+
+    if not group:
+
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Group not found",
+        )
+
+    return group
+
+def check_join_group(group_id: int, group_pw: str):
+    group = (
+        db.query(Group)
+        .filter(Group.id == group_id)
+        .filter(Group.pw == group_pw)
+        .first()
+    )
+
+    if not group:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Group not found",
+        )
+    return get_group_details(group_id=group.id)
+

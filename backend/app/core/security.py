@@ -53,5 +53,5 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
     
-    return User #since this is for internal use only, fine to return entire user object
+    return user #since this is for internal use only, fine to return entire user object
                 # just need to make sure i respond with UserOut

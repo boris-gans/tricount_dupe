@@ -74,7 +74,7 @@ export async function loginUser(payload) {
 }
 
 export async function createGroup(payload) {
-    return apiPost("/groups/", payload);
+    return apiPost("/groups/create", payload);
 }
 
 export function logout() {
