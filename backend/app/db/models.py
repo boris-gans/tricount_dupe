@@ -52,6 +52,7 @@ class Expense(Base):
 
     group_id = Column(Integer, ForeignKey("group.id"), nullable=False)
     paid_by_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
     group = relationship("Group", back_populates="expenses")
     paid_by = relationship("User")

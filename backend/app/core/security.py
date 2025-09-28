@@ -1,14 +1,14 @@
 # for later; jwt + pw hashing
-from fastapi import HTTPException, Depends
+from fastapi import HTTPException, Depends, status
 from passlib.context import CryptContext
 from datetime import datetime, timezone, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from jose import jwt
 
 from app.core.config import settings
 from app.db.session import get_db
-from app.db.models import User
+from app.db.models import User, Group
 
 
 #inits
@@ -55,3 +55,25 @@ def get_current_user(
     
     return user #since this is for internal use only, fine to return entire user object
                 # just need to make sure i respond with UserOut
+
+def get_current_group(
+        group_id: int,
+        db: Session = Depends(get_db),
+        current_user: User = Depends(get_current_user),
+) -> Group: #verifying that User is part of Group
+    group = (
+        db.query(Group)
+        .options(joinedload(Group.members))
+        .filter(Group.id == group_id)
+        .join(Group.members)  # join to users
+        .filter(User.id == current_user.id)
+        .first()
+    )
+
+    if not group:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have access to this group",
+        )
+
+    return group

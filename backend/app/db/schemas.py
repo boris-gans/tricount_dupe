@@ -32,6 +32,8 @@ class AuthOut(BaseModel):
     user: UserOut
 
     
+
+
 class ExpenseSplitIn(BaseModel):
     user: UserIn
     amount: float
@@ -39,7 +41,8 @@ class ExpenseSplitIn(BaseModel):
 # new expense
 class ExpenseCreate(BaseModel):
     paid_by_id: int #can be any user id, so dont rely on jwt
-    group_id: int
+    # created_by_id: int
+    # group_id: int
 
     amount: float
     description: Optional[str]
@@ -66,6 +69,14 @@ class ExpenseOut(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ExpenseIn(BaseModel):
+    id: int
+    amount: Optional[float] = None
+    description: Optional[str] = None
+    photo_url: Optional[str] = None
+    paid_by_id: Optional[int] = None
+    splits: Optional[List[ExpenseSplitIn]] = None
 
 
 
