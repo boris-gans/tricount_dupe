@@ -5,6 +5,8 @@ from datetime import datetime, timezone, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session, joinedload
 from jose import jwt, ExpiredSignatureError, JWTError
+from typing import Tuple
+from dataclasses import dataclass
 
 from app.core.config import settings
 from app.db.session import get_db
@@ -14,6 +16,11 @@ from app.db.models import User, Group, GroupMembers
 #inits
 pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer() 
+
+@dataclass
+class GroupContext:
+    group: Group
+    user: User
 
 
 # basic hashing
@@ -60,7 +67,7 @@ def get_current_group(
         group_id: int,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user),
-) -> Group: #verifying that User is part of Group
+) -> GroupContext: #verifying that User is part of Group
     group = (
         db.query(Group)
         .join(Group.member_associations)  # join groups → group_members
@@ -77,4 +84,4 @@ def get_current_group(
             detail="User does not have access to this group",
         )
 
-    return group
+    return GroupContext(group=group, user=current_user)

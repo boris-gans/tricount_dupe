@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from fastapi import Depends, HTTPException, status
 
 from app.db.models import Group, Expense, ExpenseSplit, User
-from app.db.schemas import ExpenseCreate, ExpenseOut, ExpenseIn
+from app.db.schemas import ExpenseCreate, ExpenseOut, ExpenseIn, ExpenseUpdate
 from app.db.session import get_db
 from app.core.logger import get_module_logger
 
@@ -100,80 +100,60 @@ def get_expense_details(expense: ExpenseIn, db: Session = Depends(get_db)) -> Ex
         )
 
 
-def edit_expense(expense: ExpenseIn, db: Session = Depends(get_db)) -> ExpenseOut:
-    logger.debug("updating expense", extra={"expense_id": expense.id})
+def edit_expense_service(
+    expense_update: ExpenseUpdate,
+    user_id: int,
+    group_id: int,
+    db: Session,
+) -> Expense:
+    logger.debug(
+        "editing expense",
+        extra={"group_id": group_id, "edited_by": user_id, "expense_id": expense_update.expense_id},
+    )
 
     try:
-        existing_expense = _load_expense_with_details(db, expense.id)
+        expense = (
+            db.query(Expense)
+            .filter(Expense.id == expense_update.expense_id, Expense.group_id == group_id)
+            .first()
+        )
 
-        if not existing_expense:
-            logger.warning(
-                "expense not found for update",
-                extra={"expense_id": expense.id},
-            )
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Expense not found",
-            )
+        if not expense:
+            raise HTTPException(status_code=404, detail="Expense not found")
 
-        if expense.amount is not None:
-            existing_expense.amount = expense.amount
+        # update only provided fields
+        if expense_update.amount is not None:
+            expense.amount = expense_update.amount
+        if expense_update.description is not None:
+            expense.description = expense_update.description
+        if expense_update.photo_url is not None:
+            expense.photo_url = expense_update.photo_url
+        if expense_update.paid_by_id is not None:
+            expense.paid_by_id = expense_update.paid_by_id
 
-        if expense.description is not None:
-            existing_expense.description = expense.description
+        if expense_update.splits is not None:
+            expense.splits.clear()
 
-        if expense.photo_url is not None:
-            existing_expense.photo_url = expense.photo_url
-
-        if expense.paid_by_id is not None:
-            payer = db.query(User).filter(User.id == expense.paid_by_id).first()
-            if not payer:
-                logger.warning(
-                    "payer not found for update",
-                    extra={"user_id": expense.paid_by_id},
-                )
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="User not found",
-                )
-            existing_expense.paid_by_id = expense.paid_by_id
-
-        if expense.splits is not None:
-            existing_expense.splits.clear()
-            for split in expense.splits:
-                split_user = db.query(User).filter(User.id == split.user.id).first()
-                if not split_user:
-                    logger.warning(
-                        "split user not found for update",
-                        extra={"user_id": split.user.id},
-                    )
-                    raise HTTPException(
-                        status_code=status.HTTP_404_NOT_FOUND,
-                        detail=f"User {split.user.id} not found",
-                    )
-
-                existing_expense.splits.append(
-                    ExpenseSplit(user_id=split.user.id, amount=split.amount)
+            for split in expense_update.splits:
+                expense.splits.append(
+                    ExpenseSplit(user_id=split.user.id, amount=split.amount, expense=expense)
                 )
 
-        db.commit()
+        logger.info("expense updated", extra={"expense_id": expense.id})
+        return expense
 
-        logger.info("expense updated", extra={"expense_id": existing_expense.id})
-
-        return _load_expense_with_details(db, existing_expense.id)
     except HTTPException:
-        db.rollback()
         raise
     except Exception:
-        db.rollback()
         logger.exception(
-            "expense update failed",
-            extra={"expense_id": expense.id},
+            "expense edit failed",
+            extra={"group_id": group_id, "expense_id": expense_update.expense_id},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update expense",
+            detail="Failed to edit expense",
         )
+
 
 
 def delete_expense(expense: ExpenseIn, db: Session = Depends(get_db)) -> bool:

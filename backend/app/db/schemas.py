@@ -49,6 +49,17 @@ class ExpenseCreate(BaseModel):
     photo_url: Optional[str]
     splits: List[ExpenseSplitIn]
 
+class ExpenseUpdate(BaseModel):
+    id: int
+    paid_by_id: Optional[int]
+    amount: Optional[float]
+    description: Optional[str]
+    photo_url: Optional[str]
+    splits: Optional[List[ExpenseSplitIn]]
+
+class ExpenseDelete(BaseModel):
+    id: int
+
 # encapsulate splits in the expense_split table
 class ExpenseSplitOut(BaseModel):
     user: UserOut

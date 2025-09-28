@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut
 from app.db.models import Group, User, GroupMembers
 from app.services.group_service import get_full_group_details, check_join_group, get_short_group_details, calculate_balance, add_user_group
-from app.core.security import get_current_user, get_current_group
+from app.core.security import get_current_user, get_current_group, GroupContext
 from app.core.logger import get_request_logger
 
 
@@ -89,13 +89,13 @@ def view_all_groups(
 
 @router.get("/{group_id}", response_model=GroupOut)
 def view_group(
-    current_group: Group = Depends(get_current_group),
+    ctx: GroupContext = Depends(get_current_group),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_request_logger),
 ):
-    logger.debug("view group attempt", extra={"group_name": current_group.name})
+    logger.debug("view group attempt", extra={"group_name": ctx.group.name, "user_name": ctx.user.name})
     
-    joined_group_details = get_full_group_details(current_group.id, db=db)
+    joined_group_details = get_full_group_details(ctx.group.id, db=db)
     for member in joined_group_details.members:
         member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
     return joined_group_details
