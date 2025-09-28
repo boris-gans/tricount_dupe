@@ -6,6 +6,8 @@ import {
   getGroupIdByName,
   saveGroupDetails
 } from './groupStorage.js'
+import AddExpenseModal from './AddExpenseModal.jsx'
+import { useAuth } from '../../AuthContext.jsx'
 
 function formatCurrency(amount) {
   if (typeof amount !== 'number') return '—'
@@ -52,18 +54,61 @@ export default function GroupDetails() {
   const { groupName } = useParams()
   const decodedName = useMemo(() => decodeURIComponent(groupName), [groupName])
   const location = useLocation()
+  const { userId } = useAuth()
 
   const initialGroup = location.state?.group || getCachedGroupDetailsByName(decodedName)
   const [group, setGroup] = useState(initialGroup || null)
   const [isLoading, setIsLoading] = useState(!initialGroup)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('expenses')
+  const [showAddExpense, setShowAddExpense] = useState(false)
+  const memberMapKey = useMemo(() => `memberNameToId:${decodedName}`, [decodedName])
+
+  const memberNameToId = useMemo(() => {
+    if (!group?.members?.length) return {}
+    return group.members.reduce((acc, member) => {
+      if (member?.name && member?.id != null) {
+        acc[member.name] = member.id
+      }
+      return acc
+    }, {})
+  }, [group])
+
+  useEffect(() => {
+    if (Object.keys(memberNameToId).length) {
+      try {
+        sessionStorage.setItem(memberMapKey, JSON.stringify(memberNameToId))
+      } catch (err) {
+        console.error('Failed to cache member name map', err)
+      }
+    } else {
+      try {
+        sessionStorage.removeItem(memberMapKey)
+      } catch (err) {
+        console.error('Failed to clear member name map', err)
+      }
+    }
+
+    return () => {
+      try {
+        sessionStorage.removeItem(memberMapKey)
+      } catch (err) {
+        console.error('Failed to remove member name map', err)
+      }
+    }
+  }, [memberMapKey, memberNameToId])
 
   const groupId = useMemo(() => {
     if (location.state?.groupId) return location.state.groupId
     if (initialGroup?.id) return initialGroup.id
     return getGroupIdByName(decodedName)
   }, [location.state, initialGroup, decodedName])
+
+  const numericUserId = useMemo(() => {
+    if (!userId) return null
+    const parsed = parseInt(userId, 10)
+    return Number.isFinite(parsed) ? parsed : null
+  }, [userId])
 
   useEffect(() => {
     let isMounted = true
@@ -102,6 +147,29 @@ export default function GroupDetails() {
       isMounted = false
     }
   }, [group, groupId])
+
+  async function refreshGroupDetails() {
+    if (!groupId) return
+    try {
+      const data = await getGroupDetails(groupId)
+      setGroup(data)
+      saveGroupDetails(data)
+    } catch (err) {
+      console.error('Failed to refresh group after creating expense', err)
+    }
+  }
+
+  function handleExpenseCreated(expense) {
+    setGroup((prev) => {
+      if (!prev) return prev
+      const existingExpenses = Array.isArray(prev.expenses) ? prev.expenses : []
+      return {
+        ...prev,
+        expenses: [expense, ...existingExpenses],
+      }
+    })
+    refreshGroupDetails()
+  }
 
   if (isLoading) {
     return (
@@ -153,15 +221,28 @@ export default function GroupDetails() {
       </div>
 
       {activeTab === 'expenses' ? (
-        <div className="expense-list">
-          {group.expenses?.length ? (
-            group.expenses.map((expense) => (
-              <ExpenseRow key={expense.id} expense={expense} />
-            ))
-          ) : (
-            <div className="empty">No expenses recorded yet.</div>
-          )}
-        </div>
+        <>
+          <div className="group-actions">
+            <button
+              type="button"
+              className="btn add-expense-btn"
+              onClick={() => setShowAddExpense(true)}
+              disabled={!group?.members?.length}
+            >
+              <span className="plus-icon">+</span>
+              Add Expense
+            </button>
+          </div>
+          <div className="expense-list">
+            {group.expenses?.length ? (
+              group.expenses.map((expense) => (
+                <ExpenseRow key={expense.id} expense={expense} />
+              ))
+            ) : (
+              <div className="empty">No expenses recorded yet.</div>
+            )}
+          </div>
+        </>
       ) : (
         <div className="balance-list">
           {group.members?.length ? (
@@ -173,6 +254,16 @@ export default function GroupDetails() {
           )}
         </div>
       )}
+
+      {showAddExpense && group?.members?.length ? (
+        <AddExpenseModal
+          groupId={group.id}
+          members={group.members}
+          currentUserId={numericUserId}
+          onClose={() => setShowAddExpense(false)}
+          onSuccess={handleExpenseCreated}
+        />
+      ) : null}
     </div>
   )
 }

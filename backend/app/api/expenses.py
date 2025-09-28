@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.db.schemas import ExpenseSplitIn, ExpenseCreate, ExpenseOut, ExpenseSplitOut
 from app.db.models import Expense, ExpenseSplit, User, Group
 from app.core.logger import get_request_logger
-from app.services.expense_service import create_expense
+from app.services.expense_service import create_expense_service
 from app.core.security import get_current_user, get_current_group
 
 router = APIRouter()
@@ -23,16 +23,16 @@ def create_expense(
     logger: Logger = Depends(get_request_logger),
 ):
     try:
-        logger.info("expense create payload received", extra={"group_id": expense.group_id, "paid_by": expense.paid_by_id, "created_by": expense.created_by_id})
+        logger.info("expense create payload received", extra={"group_id": current_group.id, "paid_by": expense.paid_by_id, "created_by": current_user.id})
 
-        new_expense = create_expense(expense=expense, user_id=current_user.id, group_id=current_group.id, db=db)
+        new_expense = create_expense_service(new_expense=expense, user_id=current_user.id, group_id=current_group.id, db=db)
 
         db.add(new_expense)
         db.commit()
         db.refresh(new_expense)
 
         logger.debug("expense created", extra={"expense_id": new_expense.id})
-        
+
         return new_expense
     
     except Exception as e:

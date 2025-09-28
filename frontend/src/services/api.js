@@ -89,6 +89,10 @@ export async function getGroupDetails(groupId) {
     return apiGet(`/groups/${groupId}`);
 }
 
+export async function createGroupExpense(groupId, payload) {
+    return apiPost(`/expenses/groups/${groupId}/create-expense`, payload);
+}
+
 export function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");

@@ -294,3 +294,149 @@
   justify-self: end;
   font-weight: 600;
 }
+
+.group-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.add-expense-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #f8fafc;
+}
+
+.add-expense-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.plus-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-weight: 700;
+}
+
+.add-expense-modal {
+  max-width: 640px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.form-field > span {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.form-field select,
+.form-field input[type="number"],
+.form-field input[type="text"] {
+  background: #0b0c10;
+  border: 1px solid #2b3443;
+  color: #e5e7eb;
+  padding: 0.65rem 0.8rem;
+  border-radius: 8px;
+}
+
+.split-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.split-row {
+  display: grid;
+  grid-template-columns: 1fr 120px 44px;
+  gap: 0.6rem;
+  align-items: center;
+  padding: 0.6rem 0.75rem;
+  background: #0e1117;
+  border: 1px solid #1f242d;
+  border-radius: 10px;
+}
+
+.split-row.inactive {
+  opacity: 0.5;
+}
+
+.split-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.split-name {
+  font-weight: 600;
+}
+
+.split-reset {
+  background: none;
+  border: 1px solid #2b3443;
+  color: #9aa4b2;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+}
+
+.split-reset:hover {
+  color: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.split-amount-input {
+  width: 100%;
+  text-align: right;
+  background: #0b0c10;
+  border: 1px solid #2b3443;
+  color: #e5e7eb;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+}
+
+.participant-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  background: #1f2937;
+  border: 1px solid #2b3443;
+  color: #9aa4b2;
+  font-size: 1.1rem;
+}
+
+.participant-toggle.active {
+  background: rgba(74, 222, 128, 0.12);
+  border-color: #4ade80;
+  color: #4ade80;
+}
+
+.participant-toggle:not(.active) {
+  color: #94a3b8;
+}
+
+.form-error {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.35);
+  padding: 0.75rem;
+  border-radius: 8px;
+}

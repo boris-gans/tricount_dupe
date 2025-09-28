@@ -1,6 +1,6 @@
 # logic for creating groups; eg. only unique users per group, max amount, etc.
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func
+from sqlalchemy import func, exists
 from fastapi import Depends, HTTPException, status
 
 from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers
@@ -56,6 +56,7 @@ def check_join_group(group_name: str, group_pw: str, db: Session) -> int:
     except Exception as e:
         logger.error(f"Error checking join group: {e}")
         raise
+
 
 def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
     try:

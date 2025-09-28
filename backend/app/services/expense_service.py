@@ -23,7 +23,7 @@ def _load_expense_with_details(db: Session, expense_id: int) -> Expense:
     )
 
 
-def create_expense(
+def create_expense_service(
         new_expense: ExpenseCreate, 
         user_id: int, 
         group_id: int, 

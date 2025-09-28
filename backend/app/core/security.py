@@ -4,15 +4,15 @@ from passlib.context import CryptContext
 from datetime import datetime, timezone, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session, joinedload
-from jose import jwt
+from jose import jwt, ExpiredSignatureError, JWTError
 
 from app.core.config import settings
 from app.db.session import get_db
-from app.db.models import User, Group
+from app.db.models import User, Group, GroupMembers
 
 
 #inits
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["argon2", "bcrypt"], deprecated="auto")
 bearer_scheme = HTTPBearer() 
 
 
@@ -33,7 +33,7 @@ def create_access_token(user_id: str | int):
 
 def decode_access_token(token: str):
     try:
-        return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+        return jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm], options={"verify_exp": True})
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
@@ -63,10 +63,11 @@ def get_current_group(
 ) -> Group: #verifying that User is part of Group
     group = (
         db.query(Group)
-        .options(joinedload(Group.members))
-        .filter(Group.id == group_id)
-        .join(Group.members)  # join to users
-        .filter(User.id == current_user.id)
+        .join(Group.member_associations)  # join groups → group_members
+        .filter(
+            Group.id == group_id,
+            GroupMembers.user_id == current_user.id
+        )
         .first()
     )
 

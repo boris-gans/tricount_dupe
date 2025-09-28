@@ -8,7 +8,7 @@ from app.db.session import get_db
 from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut
 from app.db.models import Group, User, GroupMembers
 from app.services.group_service import get_full_group_details, check_join_group, get_short_group_details, calculate_balance, add_user_group
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_group
 from app.core.logger import get_request_logger
 
 
@@ -86,3 +86,12 @@ def view_all_groups(
     except Exception as e:
         # no db rollback cause only reading
         raise
+
+@router.get("/{group_id}", response_model=GroupOut)
+def view_group(
+    current_user: User = Depends(get_current_user),
+    current_group: Group = Depends(get_current_group),
+    db: Session = Depends(get_db),
+    logger: Logger = Depends(get_request_logger),
+):
+    return get_full_group_details(current_group.id, db=db)
