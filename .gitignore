@@ -18,3 +18,8 @@ frontend/vite.config.js
 .env
 
 ai-prompts.md
+
+**/alembic.ini
+**/script.py.mako
+**/migrations/versions/
+**/migrations/README
