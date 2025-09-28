@@ -41,19 +41,18 @@ def get_full_group_details(group_id: int, db: Session) -> GroupOut:
         logger.error(f"Error loading group details: {e}")
         raise
 
-def check_join_group(group_id: int, group_pw: str, db: Session) -> bool:
+def check_join_group(group_name: str, group_pw: str, db: Session) -> int:
     try:
         group = (
             db.query(Group)
-            .filter(Group.id == group_id)
+            .filter(Group.name == group_name)
             .filter(Group.pw == group_pw)
             .first()
         )
 
-        if not group:
-            return False
+        if group:
+            return group.id
 
-        return True
     except Exception as e:
         logger.error(f"Error checking join group: {e}")
         raise

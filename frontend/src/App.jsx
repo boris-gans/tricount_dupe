@@ -11,7 +11,7 @@ function ProtectedRoute({ children }) {
 }
 
 function Navbar() {
-  const { isAuthenticated, logout } = useAuth()
+  const { isAuthenticated, logout, name } = useAuth()
   const navigate = useNavigate()
   function handleLogout() {
     logout()
@@ -19,11 +19,11 @@ function Navbar() {
   }
   return (
     <nav className="nav">
-      <Link to="/" className="brand">tricount-dupe</Link>
+      <Link to="/" className="brand">MyCount</Link>
       <div className="spacer" />
       {isAuthenticated ? (
         <>
-          <Link to="/account">Account</Link>
+          <Link to="/account">{name}</Link>
           <button className="btn" onClick={handleLogout}>Logout</button>
         </>
       ) : (

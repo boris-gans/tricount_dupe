@@ -90,7 +90,7 @@ class GroupCreate(BaseModel):
 #joining an existing group (for now just name + pw, later we can do a link or smth)
 class GroupJoinIn(BaseModel):
     # user_id: int  no longer needed cause jwt
-    group_id: int
+    group_name: str
     group_pw: str
 
 

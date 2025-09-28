@@ -6,6 +6,7 @@ const AuthContext = createContext(null)
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [userId, setUserId] = useState(() => localStorage.getItem('userId'))
+  const [name, setUserName] = useState(() => localStorage.getItem('name'))
   const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
@@ -24,6 +25,7 @@ export function AuthProvider({ children }) {
       const data = await loginUser(credentials)
       if (data?.access_token) setToken(data.access_token)
       if (data?.user?.id) setUserId(String(data.user.id))
+      if (data?.user?.name) setUserName(String(data.user.name))
       return data
     } finally {
       setIsLoading(false)
@@ -36,6 +38,7 @@ export function AuthProvider({ children }) {
       const data = await signupUser(payload)
       if (data?.access_token) setToken(data.access_token)
       if (data?.user?.id) setUserId(String(data.user.id))
+      if (data?.user?.name) setUserName(String(data.user.name))
       return data
     } finally {
       setIsLoading(false)
@@ -48,7 +51,7 @@ export function AuthProvider({ children }) {
     setUserId(null)
   }
 
-  const value = useMemo(() => ({ token, userId, isAuthenticated: Boolean(token), isLoading, login, signup, logout }), [token, userId, isLoading])
+  const value = useMemo(() => ({ token, userId, name, isAuthenticated: Boolean(token), isLoading, login, signup, logout }), [token, userId, isLoading])
 
   return (
     <AuthContext.Provider value={value}>

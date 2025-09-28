@@ -54,9 +54,10 @@ def join_group(
     logger: Logger = Depends(get_request_logger),
 ):
     try:
-        logger.debug("join group attempt", extra={"group_id": group.group_id})
-        if check_join_group(group_id=group.group_id, group_pw=group.group_pw, db=db):
-            joined_group_details = add_user_group(group_id=group.group_id, user=current_user, db=db)
+        logger.debug("join group attempt", extra={"group_name": group.group_name})
+        group_id = check_join_group(group_name=group.group_name, group_pw=group.group_pw, db=db)
+        if group_id:
+            joined_group_details = add_user_group(group_id=group_id, user=current_user, db=db)
 
             for member in joined_group_details.members:
                 member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)

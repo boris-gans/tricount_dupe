@@ -96,7 +96,7 @@ function CreateGroupModal({ onClose, onSubmit }) {
 }
 
 function JoinGroupModal({ onClose, onSubmit }) {
-  const [groupId, setGroupId] = useState('')
+  const [groupName, setGroupName] = useState('')
   const [groupPw, setGroupPw] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
@@ -104,14 +104,14 @@ function JoinGroupModal({ onClose, onSubmit }) {
     e.preventDefault()
     setIsLoading(true)
     try {
-      const parsedId = parseInt(groupId, 10)
-      if (Number.isNaN(parsedId) || parsedId <= 0) {
-        alert('Enter a valid group ID')
+      // const parsedId = parseInt(groupId, 10)
+      if (groupName === "" || groupPw === "") {
+        alert('Enter a valid group name and password')
         setIsLoading(false)
         return
       }
       await onSubmit({
-        group_id: parsedId,
+        group_name: groupName,
         group_pw: groupPw
       })
     } catch (err) {
@@ -130,12 +130,11 @@ function JoinGroupModal({ onClose, onSubmit }) {
         </div>
         <form onSubmit={handleSubmit} className="modal-form">
           <input
-            type="number"
-            placeholder="Group ID"
-            value={groupId}
-            onChange={(e) => setGroupId(e.target.value)}
+            type="string"
+            placeholder="Group Name"
+            value={groupName}
+            onChange={(e) => setGroupName(e.target.value)}
             required
-            min="1"
           />
           <input
             type="password"
@@ -157,7 +156,7 @@ function JoinGroupModal({ onClose, onSubmit }) {
 }
 
 export default function AccountHome() {
-  const { userId } = useAuth()
+  const { userId, name } = useAuth()
   const navigate = useNavigate()
   const [groups, setGroups] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -221,7 +220,7 @@ export default function AccountHome() {
   return (
     <div className="container">
       <h1>Your groups</h1>
-      <p className="muted">User ID: {userId}</p>
+      <p className="muted">{name}</p>
       <div className="card-row">
         <button className="btn primary" onClick={() => setShowCreateModal(true)}>Create new group</button>
         <button className="btn" onClick={() => setShowJoinModal(true)}>Join existing group</button>
