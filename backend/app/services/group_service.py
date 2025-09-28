@@ -5,6 +5,10 @@ from fastapi import Depends, HTTPException, status
 from app.db.models import Group
 from app.db.schemas import GroupOut
 from app.db.session import get_db
+from app.core.logger import get_module_logger
+
+
+logger = get_module_logger(__name__)
 
 
 def get_group_details(group_id: int, db: Session = Depends(get_db)) -> GroupOut:
@@ -21,10 +25,11 @@ def get_group_details(group_id: int, db: Session = Depends(get_db)) -> GroupOut:
         .first()
     )
 
-    print("GROUP DETAILS LOADED:")
+    logger.debug("group details loaded", extra={"group_id": group_id})
 
     if not group:
 
+        logger.warning("group lookup failed", extra={"group_id": group_id})
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Group not found",
@@ -46,4 +51,3 @@ def check_join_group(group_id: int, group_pw: str):
             detail="Group not found",
         )
     return get_group_details(group_id=group.id)
-

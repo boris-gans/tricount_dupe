@@ -6,10 +6,14 @@ from fastapi.middleware.cors import CORSMiddleware # type: ignore
 from sqlalchemy.exc import IntegrityError # type: ignore
 # fix linting (issue w interpreter): # type: ignore
 from app.db.session import get_db
+from app.core.logger import setup_logging
 from app.api import users, groups, expenses, auth
 
 
+app_logger = setup_logging()
+
 app = FastAPI()
+app.state.logger = app_logger
 
 origins = [
     "http://localhost:5173",

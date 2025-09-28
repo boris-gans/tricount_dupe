@@ -15,7 +15,8 @@ class User(Base):
     pw = Column(String, nullable=False)
     email = Column(String, nullable=False)
 
-    groups = relationship("Group", secondary="group_members", back_populates="members")
+    group_associations = relationship("GroupMembers", back_populates="user")
+    groups = relationship("Group", secondary="group_members", viewonly=True)
 
 
 class Group(Base):
@@ -26,14 +27,19 @@ class Group(Base):
     pw = Column(String, nullable=False)
     emoji = Column(Text) #emoji code; the icon representing group
 
-    members = relationship("User", secondary="group_members", back_populates="groups")
+    member_associations = relationship("GroupMembers", back_populates="group")
+    members = relationship("User", secondary="group_members", viewonly=True)
     expenses = relationship("Expense", back_populates="group")
 
 
 class GroupMembers(Base):
     __tablename__ = "group_members"
+
     user_id = Column(Integer, ForeignKey("user.id"), primary_key=True)
     group_id = Column(Integer, ForeignKey("group.id"), primary_key=True)
+
+    user = relationship("User", back_populates="group_associations")
+    group = relationship("Group", back_populates="member_associations")
 
 
 class Expense(Base):
