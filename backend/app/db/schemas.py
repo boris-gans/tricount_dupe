@@ -51,11 +51,7 @@ class ExpenseCreate(BaseModel):
 
 class ExpenseUpdate(BaseModel):
     id: int
-    paid_by_id: Optional[int]
-    amount: Optional[float]
-    description: Optional[str]
-    photo_url: Optional[str]
-    splits: Optional[List[ExpenseSplitIn]]
+    expense: ExpenseCreate
 
 class ExpenseDelete(BaseModel):
     id: int
@@ -132,3 +128,8 @@ class UserSummaryOut(BaseModel):
     id: int
     name: str
     groups: List[GroupShortOut]
+
+
+class GroupBalancesOut(BaseModel):
+    user: UserOut
+    amount: float

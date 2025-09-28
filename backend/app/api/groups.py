@@ -3,9 +3,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from logging import Logger
+from typing import List
 
 from app.db.session import get_db
-from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut
+from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut, GroupBalancesOut
 from app.db.models import Group, User, GroupMembers
 from app.services.group_service import get_full_group_details, check_join_group, get_short_group_details, calculate_balance, add_user_group
 from app.core.security import get_current_user, get_current_group, GroupContext
@@ -73,7 +74,7 @@ def join_group(
         raise
 
 
-@router.get("/view-short", response_model=list[GroupShortOut])
+@router.get("/view-short", response_model=List[GroupShortOut])
 def view_all_groups(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -99,3 +100,16 @@ def view_group(
     for member in joined_group_details.members:
         member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
     return joined_group_details
+
+@router.get("/{group_id}/balances", response_model=List[GroupBalancesOut])
+def view_group_balances(
+    ctx: GroupContext = Depends(get_current_group),
+    db: Session = Depends(get_db),
+    logger: Logger = Depends(get_request_logger),
+):
+    try:
+        print()
+        # TO DO: new endpoint for viewing group balances. decouple balances and expenses on frontend
+
+    except Exception as e:
+        logger.error(f"Error geting group balances: {e}")

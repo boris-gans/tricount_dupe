@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { createGroupExpense } from '../../services/api.js'
+import { createGroupExpense, updateGroupExpense } from '../../services/api.js'
 
 const roundTwo = (value) => Math.round((value + Number.EPSILON) * 100) / 100
 
@@ -13,19 +13,55 @@ function buildInitialSplits(members) {
   }))
 }
 
+function buildSplitsFromExpense(members, expense) {
+  const splitMap = new Map()
+  if (expense?.splits) {
+    for (const split of expense.splits) {
+      if (split?.user?.id != null) {
+        splitMap.set(split.user.id, roundTwo(split.amount ?? 0))
+      }
+    }
+  }
+
+  const participatingIds = Array.from(splitMap.keys())
+  const hasParticipants = participatingIds.length > 0
+  const total = hasParticipants ? roundTwo(participatingIds.reduce((sum, id) => sum + (splitMap.get(id) ?? 0), 0)) : 0
+  const evenShare = hasParticipants ? roundTwo(total / participatingIds.length) : 0
+  const isEvenSplit = hasParticipants && participatingIds.every((id) => Math.abs((splitMap.get(id) ?? 0) - evenShare) < 0.02)
+
+  return members.map((member) => {
+    if (!splitMap.has(member.id)) {
+      return {
+        id: member.id,
+        name: member.name,
+        isSelected: false,
+        isManual: false,
+        amount: 0,
+      }
+    }
+    const amount = splitMap.get(member.id) ?? 0
+    return {
+      id: member.id,
+      name: member.name,
+      isSelected: true,
+      isManual: !isEvenSplit,
+      amount,
+    }
+  })
+}
+
 export default function AddExpenseModal({
   groupId,
   members,
   currentUserId,
   onClose,
   onSuccess,
+  mode = 'create',
+  expense = null,
 }) {
   const [description, setDescription] = useState('')
   const [amountInput, setAmountInput] = useState('')
-  const [paidById, setPaidById] = useState(() => {
-    if (currentUserId && members.some((m) => m.id === currentUserId)) return currentUserId
-    return members[0]?.id ?? null
-  })
+  const [paidById, setPaidById] = useState(null)
   const [splits, setSplits] = useState(() => buildInitialSplits(members))
   const [error, setError] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -36,16 +72,26 @@ export default function AddExpenseModal({
   }, [amountInput])
 
   useEffect(() => {
-    setSplits(buildInitialSplits(members))
-  }, [members])
-
-  useEffect(() => {
-    setPaidById((prev) => {
-      if (prev && members.some((m) => m.id === prev)) return prev
+    const defaultPayer = () => {
       if (currentUserId && members.some((m) => m.id === currentUserId)) return currentUserId
       return members[0]?.id ?? null
-    })
-  }, [members, currentUserId])
+    }
+
+    if (mode === 'edit' && expense) {
+      const initialSplits = buildSplitsFromExpense(members, expense)
+      setDescription(expense.description ?? '')
+      setAmountInput(expense.amount != null ? String(expense.amount) : '')
+      const payerId = expense.paid_by?.id ?? defaultPayer()
+      setPaidById(payerId)
+      setSplits(initialSplits)
+    } else {
+      const initialSplits = buildInitialSplits(members)
+      setDescription('')
+      setAmountInput('')
+      setPaidById(defaultPayer())
+      setSplits(initialSplits)
+    }
+  }, [mode, expense, members, currentUserId])
 
   useEffect(() => {
     setSplits((prev) => redistributeSplits(prev, amountValue))
@@ -222,6 +268,32 @@ export default function AddExpenseModal({
     const payerId = paidById ?? selectedSplits[0].id
 
     setIsSubmitting(true)
+
+    if (mode === 'edit' && expense) {
+      const roundedAmount = roundTwo(amountValue)
+      const expensePayload = {
+        description: trimmedDescription,
+        amount: roundedAmount,
+        paid_by_id: payerId,
+        photo_url: expense?.photo_url ?? null,
+        splits: payloadSplits,
+      }
+
+      updateGroupExpense(groupId, {
+        id: expense.id,
+        expense: expensePayload,
+      })
+        .then((updatedExpense) => {
+          onSuccess(updatedExpense, 'edit')
+          onClose()
+        })
+        .catch((err) => {
+          setError(err.message || 'Failed to update expense.')
+        })
+        .finally(() => setIsSubmitting(false))
+      return
+    }
+
     createGroupExpense(groupId, {
       description: trimmedDescription,
       amount: roundTwo(amountValue),
@@ -229,8 +301,8 @@ export default function AddExpenseModal({
       photo_url: null,
       splits: payloadSplits,
     })
-      .then((expense) => {
-        onSuccess(expense)
+      .then((createdExpense) => {
+        onSuccess(createdExpense, 'create')
         onClose()
       })
       .catch((err) => {
@@ -239,11 +311,14 @@ export default function AddExpenseModal({
       .finally(() => setIsSubmitting(false))
   }
 
+  const headerLabel = mode === 'edit' ? 'Edit Expense' : 'Add Expense'
+  const actionLabel = mode === 'edit' ? 'Edit Expense' : 'Add expense'
+
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal add-expense-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h2>Add Expense</h2>
+          <h2>{headerLabel}</h2>
           <button className="close-btn" type="button" onClick={onClose}>×</button>
         </div>
         <form className="modal-form" onSubmit={handleSubmit}>
@@ -323,7 +398,7 @@ export default function AddExpenseModal({
           {error && <div className="form-error">{error}</div>}
           <div className="modal-actions">
             <button type="button" className="btn" onClick={onClose} disabled={isSubmitting}>Cancel</button>
-            <button type="submit" className="btn primary" disabled={isSubmitting}>Add expense</button>
+            <button type="submit" className="btn primary" disabled={isSubmitting}>{actionLabel}</button>
           </div>
         </form>
       </div>

@@ -108,38 +108,43 @@ def edit_expense_service(
 ) -> Expense:
     logger.debug(
         "editing expense",
-        extra={"group_id": group_id, "edited_by": user_id, "expense_id": expense_update.expense_id},
+        extra={"group_id": group_id, "edited_by": user_id, "expense_id": expense_update.id},
     )
 
     try:
         expense = (
             db.query(Expense)
-            .filter(Expense.id == expense_update.expense_id, Expense.group_id == group_id)
+            .filter(Expense.id == expense_update.id, Expense.group_id == group_id)
             .first()
         )
 
         if not expense:
             raise HTTPException(status_code=404, detail="Expense not found")
+        
+        edited_expense = expense_update.expense
+        expense.amount = edited_expense.amount
+        expense.description = edited_expense.description
+        expense.photo_url = edited_expense.photo_url
 
         # update only provided fields
-        if expense_update.amount is not None:
-            expense.amount = expense_update.amount
-        if expense_update.description is not None:
-            expense.description = expense_update.description
-        if expense_update.photo_url is not None:
-            expense.photo_url = expense_update.photo_url
-        if expense_update.paid_by_id is not None:
-            expense.paid_by_id = expense_update.paid_by_id
+        # if expense_update.amount is not None:
+        #     expense.amount = expense_update.amount
+        # if expense_update.description is not None:
+        #     expense.description = expense_update.description
+        # if expense_update.photo_url is not None:
+        #     expense.photo_url = expense_update.photo_url
+        # if expense_update.paid_by_id is not None:
+        #     expense.paid_by_id = expense_update.paid_by_id
 
-        if expense_update.splits is not None:
+        if edited_expense.splits is not None:
             expense.splits.clear()
 
-            for split in expense_update.splits:
+            for split in edited_expense.splits:
                 expense.splits.append(
                     ExpenseSplit(user_id=split.user.id, amount=split.amount, expense=expense)
                 )
 
-        logger.info("expense updated", extra={"expense_id": expense.id})
+        logger.info("expense updated", extra={"expense_id": expense_update.id})
         return expense
 
     except HTTPException:
@@ -147,47 +152,10 @@ def edit_expense_service(
     except Exception:
         logger.exception(
             "expense edit failed",
-            extra={"group_id": group_id, "expense_id": expense_update.expense_id},
+            extra={"group_id": group_id, "expense_id": expense_update.id},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to edit expense",
         )
 
-
-
-def delete_expense(expense: ExpenseIn, db: Session = Depends(get_db)) -> bool:
-    logger.debug("deleting expense", extra={"expense_id": expense.id})
-
-    try:
-        existing_expense = db.query(Expense).filter(Expense.id == expense.id).first()
-
-        if not existing_expense:
-            logger.warning(
-                "expense not found for delete",
-                extra={"expense_id": expense.id},
-            )
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Expense not found",
-            )
-
-        db.delete(existing_expense)
-        db.commit()
-
-        logger.info("expense deleted", extra={"expense_id": expense.id})
-
-        return True
-    except HTTPException:
-        db.rollback()
-        raise
-    except Exception:
-        db.rollback()
-        logger.exception(
-            "expense delete failed",
-            extra={"expense_id": expense.id},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete expense",
-        )

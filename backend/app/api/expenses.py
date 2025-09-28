@@ -85,7 +85,7 @@ def delete_expense(
             raise HTTPException(status_code=404, detail="Expense not found")
 
         db.delete(expense_to_delete)
-        db.commit
+        db.commit()
 
         return {"msg": "Expense deleted"}
 
@@ -94,3 +94,7 @@ def delete_expense(
         db.rollback()
         raise
 
+# @router.post("/{group_id}/view_expense")
+# def view_expense():
+#     # TO DO: 
+#     print()

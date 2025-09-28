@@ -2,7 +2,7 @@
 from .base import Base
 from sqlalchemy import (
     create_engine, Column, Integer, Text, String, Numeric, 
-    TIMESTAMP, ForeignKey, JSON, UniqueConstraint, Enum, Boolean, Float, Table
+    TIMESTAMP, ForeignKey, JSON, UniqueConstraint, Enum, Boolean, Float, Table, DateTime, func
 )
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker, joinedload
 
@@ -53,6 +53,7 @@ class Expense(Base):
     amount = Column(Float, nullable=False)
     description = Column(String)
     photo_url = Column(String) #if i want to add image storage
+    # created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     group_id = Column(Integer, ForeignKey("group.id"), nullable=False)
     paid_by_id = Column(Integer, ForeignKey("user.id"), nullable=False)

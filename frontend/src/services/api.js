@@ -90,7 +90,15 @@ export async function getGroupDetails(groupId) {
 }
 
 export async function createGroupExpense(groupId, payload) {
-    return apiPost(`/expenses/groups/${groupId}/create-expense`, payload);
+    return apiPost(`/expenses/${groupId}/create-expense`, payload);
+}
+
+export async function updateGroupExpense(groupId, payload) {
+    return apiPost(`/expenses/${groupId}/edit-expense`, payload);
+}
+
+export async function deleteGroupExpense(groupId, payload) {
+    return apiPost(`/expenses/${groupId}/delete-expense`, payload);
 }
 
 export function logout() {

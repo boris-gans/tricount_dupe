@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLocation, useParams } from 'react-router-dom'
-import { getGroupDetails } from '../../services/api.js'
+import { getGroupDetails, deleteGroupExpense } from '../../services/api.js'
 import {
   getCachedGroupDetailsByName,
   getGroupIdByName,
@@ -14,7 +14,7 @@ function formatCurrency(amount) {
   return new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD' }).format(amount)
 }
 
-function ExpenseRow({ expense }) {
+function ExpenseRow({ expense, onEdit, onDelete }) {
   const title = expense.description || 'Untitled expense'
   return (
     <div className="expense-row">
@@ -31,6 +31,14 @@ function ExpenseRow({ expense }) {
           <span className="expense-payer">Paid by {expense.paid_by?.name || 'someone'}</span>
           <span className="expense-amount">{formatCurrency(expense.amount)}</span>
         </div>
+      </div>
+      <div className="expense-actions">
+        <button type="button" className="icon-btn" onClick={() => onEdit(expense)} title="Edit expense">
+          ✏️
+        </button>
+        <button type="button" className="icon-btn danger" onClick={() => onDelete(expense)} title="Delete expense">
+          🗑️
+        </button>
       </div>
     </div>
   )
@@ -61,7 +69,7 @@ export default function GroupDetails() {
   const [isLoading, setIsLoading] = useState(!initialGroup)
   const [error, setError] = useState(null)
   const [activeTab, setActiveTab] = useState('expenses')
-  const [showAddExpense, setShowAddExpense] = useState(false)
+  const [modalState, setModalState] = useState(null)
   const memberMapKey = useMemo(() => `memberNameToId:${decodedName}`, [decodedName])
 
   const memberNameToId = useMemo(() => {
@@ -159,16 +167,52 @@ export default function GroupDetails() {
     }
   }
 
-  function handleExpenseCreated(expense) {
+  function handleExpenseSuccess(expenseResult, type) {
     setGroup((prev) => {
       if (!prev) return prev
       const existingExpenses = Array.isArray(prev.expenses) ? prev.expenses : []
+      if (type === 'edit') {
+        return {
+          ...prev,
+          expenses: existingExpenses.map((expense) => (expense.id === expenseResult.id ? expenseResult : expense)),
+        }
+      }
       return {
         ...prev,
-        expenses: [expense, ...existingExpenses],
+        expenses: [expenseResult, ...existingExpenses],
       }
     })
     refreshGroupDetails()
+  }
+
+  function handleOpenCreateModal() {
+    setModalState({ mode: 'create' })
+  }
+
+  function handleOpenEditModal(expense) {
+    setModalState({ mode: 'edit', expense })
+  }
+
+  function handleCloseModal() {
+    setModalState(null)
+  }
+
+  async function handleDeleteExpense(expense) {
+    if (!groupId || !expense?.id) return
+    try {
+      await deleteGroupExpense(groupId, { id: expense.id })
+      setGroup((prev) => {
+        if (!prev) return prev
+        const existingExpenses = Array.isArray(prev.expenses) ? prev.expenses : []
+        return {
+          ...prev,
+          expenses: existingExpenses.filter((item) => item.id !== expense.id),
+        }
+      })
+      refreshGroupDetails()
+    } catch (err) {
+      console.error('Failed to delete expense', err)
+    }
   }
 
   if (isLoading) {
@@ -226,7 +270,7 @@ export default function GroupDetails() {
             <button
               type="button"
               className="btn add-expense-btn"
-              onClick={() => setShowAddExpense(true)}
+              onClick={handleOpenCreateModal}
               disabled={!group?.members?.length}
             >
               <span className="plus-icon">+</span>
@@ -236,7 +280,12 @@ export default function GroupDetails() {
           <div className="expense-list">
             {group.expenses?.length ? (
               group.expenses.map((expense) => (
-                <ExpenseRow key={expense.id} expense={expense} />
+                <ExpenseRow
+                  key={expense.id}
+                  expense={expense}
+                  onEdit={handleOpenEditModal}
+                  onDelete={handleDeleteExpense}
+                />
               ))
             ) : (
               <div className="empty">No expenses recorded yet.</div>
@@ -255,13 +304,15 @@ export default function GroupDetails() {
         </div>
       )}
 
-      {showAddExpense && group?.members?.length ? (
+      {modalState && group?.members?.length ? (
         <AddExpenseModal
           groupId={group.id}
           members={group.members}
           currentUserId={numericUserId}
-          onClose={() => setShowAddExpense(false)}
-          onSuccess={handleExpenseCreated}
+          onClose={handleCloseModal}
+          onSuccess={handleExpenseSuccess}
+          mode={modalState.mode}
+          expense={modalState.expense}
         />
       ) : null}
     </div>
