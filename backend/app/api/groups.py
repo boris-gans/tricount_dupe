@@ -89,9 +89,13 @@ def view_all_groups(
 
 @router.get("/{group_id}", response_model=GroupOut)
 def view_group(
-    current_user: User = Depends(get_current_user),
     current_group: Group = Depends(get_current_group),
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_request_logger),
 ):
-    return get_full_group_details(current_group.id, db=db)
+    logger.debug("view group attempt", extra={"group_name": current_group.name})
+    
+    joined_group_details = get_full_group_details(current_group.id, db=db)
+    for member in joined_group_details.members:
+        member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
+    return joined_group_details

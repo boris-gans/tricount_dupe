@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext.jsx'
-import { createGroup, joinGroup, getUserGroups } from '../../services/api.js'
+import { createGroup, joinGroup, getUserGroups, getGroupDetails } from '../../services/api.js'
 import { saveGroupDetails, rememberGroupId, syncGroupSummaries } from './groupStorage.js'
 
 function EmojiPicker({ selectedEmoji, onEmojiSelect }) {
@@ -183,16 +183,28 @@ export default function AccountHome() {
     }
   }
 
-  function handleNavigateToGroup(group) {
+  async function handleNavigateToGroup(group) {
     if (!group?.id || !group?.name) return
     rememberGroupId(group.name, group.id)
-    if (group.members && group.expenses) {
-      saveGroupDetails(group)
+    try {
+      const fullGroup = await getGroupDetails(group.id)
+      if (fullGroup) {
+        saveGroupDetails(fullGroup)
+        navigate(`/account/${encodeURIComponent(fullGroup.name)}`, {
+          state: {
+            groupId: fullGroup.id,
+            group: fullGroup,
+          }
+        })
+        return
+      }
+    } catch (err) {
+      console.error('Failed to load full group details', err)
     }
+
     navigate(`/account/${encodeURIComponent(group.name)}`, {
       state: {
         groupId: group.id,
-        group: group.members && group.expenses ? group : undefined
       }
     })
   }

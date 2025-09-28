@@ -42,7 +42,7 @@ def decode_access_token(token: str):
 # dependency for jwt
 def get_current_user(
         creds: HTTPAuthorizationCredentials = Depends(bearer_scheme),
-        db: Session = Depends(get_db)
+        db: Session = Depends(get_db),
 ) -> User:
     payload = decode_access_token(creds.credentials)
     user_id = payload.get("sub")
