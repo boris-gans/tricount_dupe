@@ -1,13 +1,13 @@
 # translates pure http --> group class
 
-from fastapi import APIRouter, Depends # type: ignore
-from sqlalchemy.orm import Session # type: ignore
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
 from logging import Logger
 
 from app.db.session import get_db
-from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut
+from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut
 from app.db.models import Group, User, GroupMembers
-from app.services.group_service import get_full_group_details, check_join_group
+from app.services.group_service import get_full_group_details, check_join_group, get_short_group_details, calculate_balance, add_user_group
 from app.core.security import get_current_user
 from app.core.logger import get_request_logger
 
@@ -33,11 +33,15 @@ def create_group(
         db.commit()
         db.refresh(new_group)
 
-
-
         logger.info("group created", extra={"group_id": new_group.id})
 
-        return get_full_group_details(new_group.id, db=db)
+        group_details = get_full_group_details(new_group.id, db=db)
+        # calc balances
+        for member in group_details.members:
+            member.balance = calculate_balance(user=member, group_id=group_details.id, db=db)
+
+        return group_details
+
     except Exception as e:
         db.rollback()
         raise
@@ -46,17 +50,29 @@ def create_group(
 def join_group(
     group: GroupJoinIn,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
     logger: Logger = Depends(get_request_logger),
 ):
     try:
         logger.debug("join group attempt", extra={"group_id": group.group_id})
-        return check_join_group(group_id=group.group_id, group_pw=group.group_pw, db=db)
+        if check_join_group(group_id=group.group_id, group_pw=group.group_pw, db=db):
+            joined_group_details = add_user_group(group_id=group.group_id, user=current_user, db=db)
+
+            for member in joined_group_details.members:
+                member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
+            return joined_group_details
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Group not found",
+            )
+
     except Exception as e:
         db.rollback()
         raise
 
 
-@router.post("/view-short", response_model=GroupShortOut)
+@router.get("/view-short", response_model=list[GroupShortOut])
 def view_all_groups(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -64,6 +80,7 @@ def view_all_groups(
 ):
     try:
         logger.debug("view all groups attempt", extra={"User id": current_user.id, "User name ": current_user.name})
+        return get_short_group_details(user_id=current_user.id, db=db)
     
     except Exception as e:
         # no db rollback cause only reading

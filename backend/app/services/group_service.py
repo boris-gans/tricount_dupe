@@ -1,9 +1,10 @@
 # logic for creating groups; eg. only unique users per group, max amount, etc.
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import func
 from fastapi import Depends, HTTPException, status
 
-from app.db.models import Group, Expense, ExpenseSplit, User
-from app.db.schemas import GroupOut, GroupShortOut
+from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers
+from app.db.schemas import GroupOut, GroupShortOut, UserSummaryOut
 from app.db.session import get_db
 from app.core.logger import get_module_logger
 
@@ -19,8 +20,8 @@ def get_full_group_details(group_id: int, db: Session) -> GroupOut:
                 joinedload(Group.members),
                 joinedload(Group.expenses)
                 # .joinedload(Expense.paid_by)
-                .joinedload(Expense.splits)
-                .joinedload(ExpenseSplit.user)    
+                    .joinedload(Expense.splits)
+                    .joinedload(ExpenseSplit.user)    
             )
             .filter(Group.id == group_id)
             .first()
@@ -40,7 +41,7 @@ def get_full_group_details(group_id: int, db: Session) -> GroupOut:
         logger.error(f"Error loading group details: {e}")
         raise
 
-def check_join_group(group_id: int, group_pw: str, db: Session) -> GroupOut:
+def check_join_group(group_id: int, group_pw: str, db: Session) -> bool:
     try:
         group = (
             db.query(Group)
@@ -50,22 +51,38 @@ def check_join_group(group_id: int, group_pw: str, db: Session) -> GroupOut:
         )
 
         if not group:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Group not found",
-            )
-        return get_full_group_details(group_id=group.id, db=db)
+            return False
+
+        return True
     except Exception as e:
         logger.error(f"Error checking join group: {e}")
         raise
 
-def get_short_group_details(user_id: int, db: Session) -> GroupShortOut:
+def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
     try:
+        group = (
+            db.query(Group)
+            .filter(Group.id == group_id)
+            .first()
+        )
+        new_member = GroupMembers(user=user, group=group)
+        group.member_associations.append(new_member)
+
+        db.add(new_member)
+        db.commit()
+        db.refresh(new_member)
+        return get_full_group_details(group_id=group_id, db=db)
+    except Exception as e:
+        logger.error(f"Error adding user to group: {e}")
+        raise
+
+
+def get_short_group_details(user_id: int, db: Session) -> list[GroupShortOut]:
+    try:
+        logger.debug("group list request received")
         group_list = (
             db.query(Group)
-            .options(
-                joinedload(Group.members)
-            )
+            .join(Group.members)
             .filter(User.id == user_id)
             .all()
         )
@@ -75,6 +92,31 @@ def get_short_group_details(user_id: int, db: Session) -> GroupShortOut:
         logger.error(f"Error getting short group list: {e}")
         raise
 
+def calculate_balance(user: User, group_id: int, db: Session):
+    try:
+        print()
+
+        #total paid by user_id in this group
+        total_paid = (
+            db.query(func.coalesce(func.sum(Expense.amount), 0.0))
+            .filter(Expense.group_id == group_id, Expense.paid_by_id == user.id)
+            .scalar()
+        )
+
+        #total owed by the user in this group (splits)
+        total_owed = (
+            db.query(func.coalesce(func.sum(ExpenseSplit.amount), 0.0))
+            .join(Expense)
+            .filter(Expense.group_id == group_id, ExpenseSplit.user_id == user.id)
+            .scalar()
+        )
+
+        balance = float(total_paid) - float(total_owed)
+        return balance
+
+    except Exception as e:
+        logger.error(f"Error calculating balances: {e}")
+        raise
 
 
 

@@ -77,6 +77,18 @@ export async function createGroup(payload) {
     return apiPost("/groups/create", payload);
 }
 
+export async function joinGroup(payload) {
+    return apiPost("/groups/join", payload);
+}
+
+export async function getUserGroups() {
+    return apiGet("/groups/view-short");
+}
+
+export async function getGroupDetails(groupId) {
+    return apiGet(`/groups/${groupId}`);
+}
+
 export function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("userId");

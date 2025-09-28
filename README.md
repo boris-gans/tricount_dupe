@@ -4,7 +4,7 @@
 This project is a full-stack web application designed to help individuals both track and split their expenses within a group. It provides a structured backend for data management and a responsive and sleek frontend for user interaction.
 
 ### Technologies Used
-- **Backend:** FastAPI (Python), SQLAlchemy (ORM), Pydantic (data validation & schemas), PostgreSQL (database)  
+- **Backend:** FastAPI (Python), SQLAlchemy (ORM), Pydantic (data validation & schemas), PostgreSQL (database), Alembic (database migrations)
 - **Frontend:** React (JavaScript), Vite
 <!-- - **Other Tools:** ERD for database design, Local Storage for persisting user data   -->
 
@@ -15,6 +15,7 @@ This project is a full-stack web application designed to help individuals both t
 - Persistent user sessions via local storage  
 - Database integration with SQLAlchemy models  
 - API endpoints defined with FastAPI and validated with Pydantic  
+- Database migrations for updating schema using Alembic
 <!-- - (More features will be expanded here in the future…)   -->
 
 ---

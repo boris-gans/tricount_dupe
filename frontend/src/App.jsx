@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom'
-import { useState } from 'react'
 import './App.css'
 import { useAuth } from './AuthContext.jsx'
-import { createGroup } from './services/api.js'
+import AccountHome from './features/groups/AccountHome.jsx'
+import GroupDetails from './features/groups/GroupDetails.jsx'
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated } = useAuth()
@@ -107,180 +107,6 @@ function Signup() {
   )
 }
 
-// Emoji picker component
-function EmojiPicker({ selectedEmoji, onEmojiSelect }) {
-  const emojis = [
-    { name: 'Party', code: '🎉' },
-    { name: 'Money', code: '💰' },
-    { name: 'Food', code: '🍕' },
-    { name: 'Travel', code: '✈️' },
-    { name: 'Home', code: '🏠' },
-    { name: 'Car', code: '🚗' },
-    { name: 'Gift', code: '🎁' },
-    { name: 'Heart', code: '❤️' },
-    { name: 'Star', code: '⭐' },
-    { name: 'Fire', code: '🔥' },
-    { name: 'Lightning', code: '⚡' },
-    { name: 'Rocket', code: '🚀' }
-  ]
-
-  return (
-    <div className="emoji-picker">
-      <div className="emoji-grid">
-        {emojis.map((emoji) => (
-          <button
-            key={emoji.code}
-            type="button"
-            className={`emoji-option ${selectedEmoji === emoji.code ? 'selected' : ''}`}
-            onClick={() => onEmojiSelect(emoji.code)}
-            title={emoji.name}
-          >
-            {emoji.code}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-// Create group modal
-function CreateGroupModal({ onClose }) {
-  const [name, setName] = useState('')
-  const [groupPw, setGroupPw] = useState('')
-  const [emoji, setEmoji] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setIsLoading(true)
-    try {
-      await createGroup({ name, group_pw: groupPw, emoji: emoji || null })
-      onClose()
-      // TODO: Refresh groups list
-    } catch (err) {
-      alert(err.message || 'Failed to create group')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Create New Group</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <input
-            type="text"
-            placeholder="Group name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Group password"
-            value={groupPw}
-            onChange={(e) => setGroupPw(e.target.value)}
-            required
-          />
-          <div className="emoji-section">
-            <label>Choose an emoji (optional)</label>
-            <EmojiPicker selectedEmoji={emoji} onEmojiSelect={setEmoji} />
-          </div>
-          <div className="modal-actions">
-            <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn primary" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Group'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-// Join group modal
-function JoinGroupModal({ onClose }) {
-  const [groupId, setGroupId] = useState('')
-  const [groupPw, setGroupPw] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
-
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setIsLoading(true)
-    try {
-      // TODO: Implement join group API call
-      console.log('Joining group:', { group_id: parseInt(groupId), group_pw: groupPw })
-      onClose()
-    } catch (err) {
-      alert(err.message || 'Failed to join group')
-    } finally {
-      setIsLoading(false)
-    }
-  }
-
-  return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Join Existing Group</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <input
-            type="number"
-            placeholder="Group ID"
-            value={groupId}
-            onChange={(e) => setGroupId(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Group password"
-            value={groupPw}
-            onChange={(e) => setGroupPw(e.target.value)}
-            required
-          />
-          <div className="modal-actions">
-            <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn primary" disabled={isLoading}>
-              {isLoading ? 'Joining...' : 'Join Group'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
-
-function Account() {
-  const userId = localStorage.getItem('userId')
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showJoinModal, setShowJoinModal] = useState(false)
-  
-  return (
-    <div className="container">
-      <h1>Your groups</h1>
-      <p className="muted">User ID: {userId}</p>
-      <div className="card-row">
-        <button className="btn primary" onClick={() => setShowCreateModal(true)}>Create new group</button>
-        <button className="btn" onClick={() => setShowJoinModal(true)}>Join existing group</button>
-      </div>
-      <div className="empty">No groups yet.</div>
-      
-      {showCreateModal && (
-        <CreateGroupModal onClose={() => setShowCreateModal(false)} />
-      )}
-      {showJoinModal && (
-        <JoinGroupModal onClose={() => setShowJoinModal(false)} />
-      )}
-    </div>
-  )
-}
-
 export default function App() {
   return (
     <div className="app">
@@ -289,7 +115,8 @@ export default function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+        <Route path="/account" element={<ProtectedRoute><AccountHome /></ProtectedRoute>} />
+        <Route path="/account/:groupName" element={<ProtectedRoute><GroupDetails /></ProtectedRoute>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>

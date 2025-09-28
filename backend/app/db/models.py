@@ -18,6 +18,10 @@ class User(Base):
     group_associations = relationship("GroupMembers", back_populates="user")
     groups = relationship("Group", secondary="group_members", viewonly=True)
 
+    expenses_paid = relationship("Expense", foreign_keys="Expense.paid_by_id", back_populates="paid_by")
+    expenses_created = relationship("Expense", foreign_keys="Expense.created_by_id", back_populates="created_by")
+
+
 
 class Group(Base):
     __tablename__ = "group"
@@ -55,7 +59,8 @@ class Expense(Base):
     created_by_id = Column(Integer, ForeignKey("user.id"), nullable=False)
 
     group = relationship("Group", back_populates="expenses")
-    paid_by = relationship("User")
+    paid_by = relationship("User", foreign_keys=[paid_by_id], back_populates="expenses_paid")
+    created_by = relationship("User", foreign_keys=[created_by_id], back_populates="expenses_created")
 
     splits = relationship("ExpenseSplit", back_populates="expense", cascade="all, delete-orphan")
 
