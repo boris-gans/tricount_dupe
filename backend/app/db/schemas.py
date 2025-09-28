@@ -93,12 +93,18 @@ class GroupJoinIn(BaseModel):
     group_id: int
     group_pw: str
 
+
+class UserBalanceOut(BaseModel):
+    id: int
+    name: str
+    balance: float
+
 #info received when you click on an actual group
 class GroupOut(BaseModel):
     id: int
     name: str
     emoji: Optional[str]
-    members: List[UserOut]
+    members: List[UserBalanceOut]
     expenses: List[ExpenseOut]
 
     class Config:
