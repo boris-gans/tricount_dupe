@@ -8,6 +8,8 @@ from app.db.session import get_db
 from app.db.schemas import ExpenseSplitIn, ExpenseCreate, ExpenseOut, ExpenseSplitOut, ExpenseUpdate, GroupOut, ExpenseDelete
 from app.db.models import Expense, ExpenseSplit, User, Group
 from app.core.logger import get_request_logger
+from app.core.exceptions import ExpenseCreationError, ExpenseEditError, ExpenseNotFoundError
+
 from app.services.expense_service import create_expense_service, edit_expense_service
 from app.core.security import get_current_user, get_current_group, GroupContext
 
@@ -23,21 +25,22 @@ def create_expense(
 ):
     try:
         logger.info("expense create payload received", extra={"group_id": ctx.group.id, "paid_by": expense.paid_by_id, "created_by": ctx.user.id})
-
         new_expense = create_expense_service(new_expense=expense, user_id=ctx.user.id, group_id=ctx.group.id, db=db)
-
-        db.add(new_expense)
         db.commit()
-        db.refresh(new_expense)
-
         logger.debug("expense created", extra={"expense_id": new_expense.id})
 
         return new_expense
     
+    except ExpenseCreationError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_ERROR,
+            detail="Error creating expense"
+        ) 
     except Exception as e:
         logger.error(f"Error creating expense: {e}")
         db.rollback()
-        raise
+        raise HTTPException(status_code=500, detail="Unexpected server error")
 
 @router.post("/{group_id}/edit-expense", response_model=ExpenseOut)
 def edit_expense(
@@ -50,19 +53,30 @@ def edit_expense(
     try:
         logger.info("expense edit payload recieved", extra={"group_id": ctx.group.id, "user_id": ctx.user.id, "expense_id": expense.id})
         updated_expense = edit_expense_service(expense_update=expense, user_id=ctx.user.id, group_id=ctx.group.id, db=db)
-
         db.add(updated_expense)
         db.commit()
         db.refresh(updated_expense)
-
         logger.debug("expense updated", extra={"expense_id": updated_expense.id})
 
         return updated_expense
-
+    
+    except ExpenseNotFoundError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Expense not found"
+        ) 
+    except ExpenseEditError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_ERROR,
+            detail="Error creating expense"
+        ) 
     except Exception as e:
         logger.error(f"Error editing expense: {e}")
         db.rollback()
-        raise
+        raise HTTPException(status_code=500, detail="Unexpected server error")
+
 
 @router.post("/{group_id}/delete-expense")
 def delete_expense(
@@ -73,28 +87,26 @@ def delete_expense(
     logger: Logger = Depends(get_request_logger),
 ):
     try:
-        logger.info("expense delete payload recieved", extra={"group_id": ctx.group.id, "user_id": ctx.user.id, "expense_id": expense.id})
-        
+        logger.info("expense delete payload recieved", extra={"group_id": ctx.group.id, "user_id": ctx.user.id, "expense_id": expense.id})   
         expense_to_delete = (
             db.query(Expense)
             .filter(Expense.id == expense.id, Expense.group_id == group_id)
             .first()
         )
-
         if not expense_to_delete:
-            raise HTTPException(status_code=404, detail="Expense not found")
-
+            raise ExpenseNotFoundError
         db.delete(expense_to_delete)
         db.commit()
 
         return {"msg": "Expense deleted"}
-
+    
+    except ExpenseNotFoundError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Expense not found"
+        )
     except Exception as e:
         logger.error(f"Error deleting expense: {e}")
         db.rollback()
-        raise
-
-# @router.post("/{group_id}/view_expense")
-# def view_expense():
-#     # TO DO: 
-#     print()
+        raise HTTPException(status_code=500, detail="Unexpected server error")

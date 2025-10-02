@@ -8,10 +8,9 @@ class ExpenseCreationError(Exception):
     """Generic expense creation error"""
     pass
 
-# class ExpenseSplitCreationError(Exception):
-#     """When the ExpenseSplit relationship cant be made with an Expense"""
-#     pass
-
+class ExpenseEditError(Exception):
+    """Generic expense edit error"""
+    pass
 
 
 class ExpenseNotFoundError(Exception):
@@ -21,7 +20,6 @@ class ExpenseNotFoundError(Exception):
 # ******************************************************************************************************************************************************************************************
 # GROUPS
 # ******************************************************************************************************************************************************************************************
-
 class GroupCreationError(Exception):
     """When a group cant be created"""
     pass
