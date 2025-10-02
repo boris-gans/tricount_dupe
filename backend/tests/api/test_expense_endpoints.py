@@ -23,14 +23,15 @@ def _ensure_membership(db_session, group: Group, user: User) -> None:
     db_session.flush()
 
 
-def _create_expense(db_session, group: Group, creator: User, splits: list[tuple[User, float]], amount: float, description: str = "Expense") -> Expense:
+# error here; test assumes the creator was also paid by
+def _create_expense(db_session, group: Group, payer: User, splits: list[tuple[User, float]], amount: float, description: str = "Expense") -> Expense:
     payload = ExpenseCreate(
-        paid_by_id=creator.id,
+        paid_by_id=payer.id,
         amount=amount,
         description=description,
         splits=[ExpenseSplitIn(user=UserIn(id=user.id, name=user.name), amount=split_amount) for user, split_amount in splits],
     )
-    return create_expense_service(new_expense=payload, user_id=creator.id, group_id=group.id, db=db_session)
+    return create_expense_service(new_expense=payload, user_id=payer.id, group_id=group.id, db=db_session)
 
 
 def test_create_expense_success(client, db_session):
@@ -78,8 +79,8 @@ def test_create_expense_failure(client, auth_header, monkeypatch):
         json={"paid_by_id": user.id, "amount": 10.0, "description": "", "splits": []},
     )
 
-    assert response.status_code == 500
-    assert response.json()["detail"] == "Error creating expense"
+    assert response.status_code == 403 #should be 403 because the user isnt part of group (get_current_group dependency)
+    assert response.json()["detail"] == "User does not have access to this group"
 
 
 def test_edit_expense_success(client, db_session):
@@ -93,7 +94,7 @@ def test_edit_expense_success(client, db_session):
     _ensure_membership(db_session, group, user)
     _ensure_membership(db_session, group, roommate)
 
-    expense = _create_expense(db_session, group, user, splits=[(user, 20.0), (roommate, 20.0)], amount=40.0, description="Utilities")
+    expense = _create_expense(db_session, group, roommate, splits=[(user, 20.0), (roommate, 20.0)], amount=40.0, description="Utilities")
 
     headers = _auth_headers_for_user(user)
     update_payload = {
