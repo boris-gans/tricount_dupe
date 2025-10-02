@@ -59,7 +59,7 @@ class Expense(Base):
     paid_by = relationship("User", foreign_keys=[paid_by_id], back_populates="expenses_paid")
     created_by = relationship("User", foreign_keys=[created_by_id], back_populates="expenses_created")
 
-    splits = relationship("ExpenseSplit", back_populates="expense", cascade="all, delete-orphan")
+    splits = relationship("ExpenseSplit", back_populates="expense", cascade="all, delete-orphan", single_parent=True)
 
 class ExpenseSplit(Base):
     __tablename__ = "expense_split"

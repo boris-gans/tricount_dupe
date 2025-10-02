@@ -34,7 +34,7 @@ def create_expense_service(
         # iterate over splits
         for split in new_expense.splits:
             expense.splits.append(
-                ExpenseSplit(user_id=split.user.id, amount=split.amount, expense=expense)
+                ExpenseSplit(user_id=split.user.id, amount=split.amount)
             )
 
         db.add(expense)
@@ -75,16 +75,18 @@ def edit_expense_service(
         edited_expense = expense_update.expense
         expense.amount = edited_expense.amount
         expense.description = edited_expense.description
+        expense.paid_by_id = edited_expense.paid_by_id
 
 
         if edited_expense.splits is not None:
             expense.splits.clear()
+            db.flush()
 
             for split in edited_expense.splits:
                 expense.splits.append(
-                    ExpenseSplit(user_id=split.user.id, amount=split.amount, expense=expense)
+                    ExpenseSplit(user_id=split.user.id, amount=split.amount)
                 )
-
+        db.flush()
         logger.info("expense updated", extra={"expense_id": expense_update.id})
         return expense
 
