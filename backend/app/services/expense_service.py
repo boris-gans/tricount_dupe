@@ -5,6 +5,7 @@ from fastapi import Depends, HTTPException, status
 
 from app.db.models import Group, Expense, ExpenseSplit, User
 from app.db.schemas import ExpenseCreate, ExpenseOut, ExpenseIn, ExpenseUpdate
+from app.core.exceptions import ExpenseCreationError, ExpenseSplitCreationError, ExpenseNotFoundError
 from app.db.session import get_db
 from app.core.logger import get_module_logger
 
@@ -35,7 +36,6 @@ def create_expense_service(
     )
 
     try:
-
         expense = Expense(
             amount=new_expense.amount,
             description=new_expense.description,
@@ -51,23 +51,19 @@ def create_expense_service(
                 ExpenseSplit(user_id=split.user.id, amount=split.amount, expense=expense)
             )
 
+        db.add(expense)
+        db.flush()
+        db.refresh(expense)
         logger.info("expense object created")
+
         return expense
     
-    except HTTPException:
-        # db.rollback()
-        raise
-    except Exception:
-        # db.rollback()
-        logger.exception(
+    except Exception as e:
+        logger.error(
             "expense object creation failed",
             extra={"group_id": group_id},
         )
-        
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create expense object",
-        )
+        raise ExpenseCreationError from e
 
 
 def get_expense_details(expense: ExpenseIn, db: Session = Depends(get_db)) -> ExpenseOut:
