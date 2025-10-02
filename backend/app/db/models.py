@@ -1,4 +1,6 @@
 # sqlalchemy ORM models (unique per group, expense and user)
+import secrets
+
 from .base import Base
 from sqlalchemy import (
     create_engine, Column, Integer, Text, String, Numeric, 
@@ -20,6 +22,7 @@ class User(Base):
 
     expenses_paid = relationship("Expense", foreign_keys="Expense.paid_by_id", back_populates="paid_by")
     expenses_created = relationship("Expense", foreign_keys="Expense.created_by_id", back_populates="created_by")
+    created_invites = relationship("GroupInvite", back_populates="created_by")
 
 
 
@@ -29,11 +32,13 @@ class Group(Base):
     id = Column(Integer, autoincrement=True, primary_key=True)
     name = Column(String, nullable=False)
     pw = Column(String, nullable=False)
+
     emoji = Column(Text) #emoji code; the icon representing group
 
     member_associations = relationship("GroupMembers", back_populates="group")
     members = relationship("User", secondary="group_members", viewonly=True)
     expenses = relationship("Expense", back_populates="group")
+    invites = relationship("GroupInvite", back_populates="group", cascade="all, delete-orphan")
 
 
 class GroupMembers(Base):
@@ -75,3 +80,19 @@ class ExpenseSplit(Base):
 
     expense = relationship("Expense", back_populates="splits")
     user = relationship("User")
+
+
+class GroupInvite(Base):
+    __tablename__ = "group_invite"
+
+    id = Column(Integer, autoincrement=True, primary_key=True)
+    token = Column(String, unique=True, nullable=False, index=True, default=lambda: secrets.token_urlsafe(16))
+    group_id = Column(Integer, ForeignKey("group.id"), nullable=False)
+    created_by_id = Column(Integer, ForeignKey("user.id"), nullable=False)
+
+    expires_at = Column(DateTime(timezone=True), nullable=True)
+    used = Column(Boolean, default=False, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    group = relationship("Group", back_populates="invites")
+    created_by = relationship("User", back_populates="created_invites")

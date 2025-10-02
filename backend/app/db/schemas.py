@@ -95,11 +95,13 @@ class GroupCreate(BaseModel):
     emoji: Optional[str]
 
 #joining an existing group (for now just name + pw, later we can do a link or smth)
-class GroupJoinIn(BaseModel):
-    # user_id: int  no longer needed cause jwt
+class PasswordAuth(BaseModel):
     group_name: str
     group_pw: str
 
+class GroupJoinIn(BaseModel):
+    pw_auth: Optional[PasswordAuth] = None
+    link_auth: Optional[str] = None
 
 class UserBalanceOut(BaseModel):
     id: int
@@ -121,6 +123,9 @@ class GroupShortOut(BaseModel):
     id: int
     name: str
     emoji: Optional[str]
+
+class GroupInviteOut(BaseModel):
+    token: str
 
 
 # need a user login; should return all groups and the shorthand info (just name, id, emoji)

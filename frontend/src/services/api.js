@@ -86,6 +86,10 @@ export async function getGroupDetails(groupId) {
     return apiGet(`/groups/${groupId}`);
 }
 
+export async function createGroupInviteLink(groupId) {
+    return apiGet(`/groups/${groupId}/create-invite`);
+}
+
 export async function createGroupExpense(groupId, payload) {
     return apiPost(`/expenses/${groupId}/create-expense`, payload);
 }

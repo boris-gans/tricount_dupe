@@ -128,6 +128,7 @@ function CreateGroupDialog({ open, onOpenChange, onSubmit }) {
 }
 
 function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
+  const [inviteLink, setInviteLink] = useState('')
   const [groupName, setGroupName] = useState('')
   const [groupPw, setGroupPw] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -136,12 +137,31 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
     e.preventDefault()
     setIsLoading(true)
     try {
+      const trimmedLink = inviteLink.trim()
+
+      if (trimmedLink) {
+        await onSubmit({
+          link_auth: trimmedLink,
+        })
+        setInviteLink('')
+        setGroupName('')
+        setGroupPw('')
+        return
+      }
+
       if (groupName === '' || groupPw === '') {
-        alert('Enter a valid group name and password')
+        alert('Provide either an invite link or a group name and password')
         setIsLoading(false)
         return
       }
-      await onSubmit({ group_name: groupName, group_pw: groupPw })
+
+      await onSubmit({
+        pw_auth: {
+          group_name: groupName,
+          group_pw: groupPw,
+        },
+      })
+      setInviteLink('')
       setGroupName('')
       setGroupPw('')
     } catch (err) {
@@ -160,15 +180,32 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="join-name">Group name</Label>
+            <Label htmlFor="join-link">Group invite link</Label>
             <Input
-              id="join-name"
+              id="join-link"
               type="text"
-              value={groupName}
-              onChange={(e) => setGroupName(e.target.value)}
-              placeholder="Weekend trip"
-              required
+              value={inviteLink}
+              onChange={(e) => setInviteLink(e.target.value)}
+              placeholder="Paste your invite link"
             />
+          </div>
+          <div className="relative">
+            <div className="my-2 flex items-center gap-2 text-xs uppercase tracking-wide text-muted-foreground">
+              <span className="h-px flex-1 bg-border" />
+              or join with group name & password
+              <span className="h-px flex-1 bg-border" />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="join-name">Group name</Label>
+              <Input
+                id="join-name"
+                type="text"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                placeholder="Weekend trip"
+                required={!inviteLink.trim()}
+              />
+            </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="join-pw">Group password</Label>
@@ -178,7 +215,7 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
               value={groupPw}
               onChange={(e) => setGroupPw(e.target.value)}
               placeholder="Password"
-              required
+              required={!inviteLink.trim()}
             />
           </div>
           <DialogFooter>

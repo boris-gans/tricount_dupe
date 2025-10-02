@@ -4,11 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from logging import Logger
 from typing import List
+from datetime import datetime, timedelta, timezone
 
 from app.db.session import get_db
-from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut, GroupBalancesOut
+from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut, GroupBalancesOut, GroupInviteOut
 from app.db.models import Group, User, GroupMembers
-from app.services.group_service import get_full_group_details, check_join_group, get_short_group_details, calculate_balance, add_user_group
+from app.services.group_service import get_full_group_details, check_join_group, check_link_join, get_short_group_details, calculate_balance, add_user_group, create_group_invite_service
 from app.core.security import get_current_user, get_current_group, GroupContext
 from app.core.logger import get_request_logger
 
@@ -55,8 +56,8 @@ def join_group(
     logger: Logger = Depends(get_request_logger),
 ):
     try:
-        logger.debug("join group attempt", extra={"group_name": group.group_name})
-        group_id = check_join_group(group_name=group.group_name, group_pw=group.group_pw, db=db)
+        logger.debug("join group attempt", extra={"type": group.pw_auth if group.pw_auth else group.link_auth})
+        group_id = check_join_group(group_name=group.pw_auth.group_name, group_pw=group.pw_auth.group_pw, db=db) if group.pw_auth else check_link_join(token_link=group.link_auth, db=db)
         if group_id:
             joined_group_details = add_user_group(group_id=group_id, user=current_user, db=db)
 
@@ -71,6 +72,7 @@ def join_group(
 
     except Exception as e:
         db.rollback()
+        logger.error(f"error in join group endpoint: {e}")
         raise
 
 
@@ -113,3 +115,17 @@ def view_group_balances(
 
     except Exception as e:
         logger.error(f"Error geting group balances: {e}")
+
+
+@router.get("/{group_id}/create-invite", response_model=GroupInviteOut)
+def create_group_invite(
+    ctx: GroupContext = Depends(get_current_group),
+    db: Session = Depends(get_db),
+    logger: Logger = Depends(get_request_logger)
+):
+    try:
+        now = datetime.now(timezone.utc)
+        expires_at = now + timedelta(minutes=10) #10 min token expiry time
+        return create_group_invite_service(user_id=ctx.user.id, group_id=ctx.group.id, db=db, expires_at=expires_at)
+    except Exception as e:
+        logger.error(f"Error creating group invite: {e}")

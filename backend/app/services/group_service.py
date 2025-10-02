@@ -1,10 +1,14 @@
 # logic for creating groups; eg. only unique users per group, max amount, etc.
+import secrets
+from datetime import datetime, timezone
+
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, exists
 from fastapi import Depends, HTTPException, status
+from urllib.parse import urlparse, parse_qs
 
-from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers
-from app.db.schemas import GroupOut, GroupShortOut, UserSummaryOut
+from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers, GroupInvite
+from app.db.schemas import GroupOut, GroupShortOut, UserSummaryOut, GroupInviteOut
 from app.db.session import get_db
 from app.core.logger import get_module_logger
 
@@ -57,6 +61,43 @@ def check_join_group(group_name: str, group_pw: str, db: Session) -> int:
         logger.error(f"Error checking join group: {e}")
         raise
 
+def check_link_join(token_link: str, db: Session) -> int:
+    try:
+        parsed = urlparse(token_link)
+        query_params = parse_qs(parsed.query)
+        token = query_params.get("token", [None])[0]
+
+        logger.info(f"Token to check: {token}")
+
+        invite = (
+            db.query(GroupInvite)
+            .filter(GroupInvite.token == token)
+            .first()
+        )
+
+        if not invite:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Invalid invite link"
+            )
+
+        if invite.used or (invite.expires_at and invite.expires_at < datetime.now(timezone.utc)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invite link has already been used or is expired"
+            )
+
+        #mark as used
+        invite.used = True
+        db.add(invite)
+        db.commit()
+        db.refresh(invite)
+        return invite.group_id
+
+    except Exception as e:
+        db.rollback() #cause we change used field
+        logger.error(f"Error checking link join: {e}")
+        raise
 
 def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
     try:
@@ -73,6 +114,7 @@ def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
         db.refresh(new_member)
         return get_full_group_details(group_id=group_id, db=db)
     except Exception as e:
+        db.rollback()
         logger.error(f"Error adding user to group: {e}")
         raise
 
@@ -94,8 +136,6 @@ def get_short_group_details(user_id: int, db: Session) -> list[GroupShortOut]:
 
 def calculate_balance(user: User, group_id: int, db: Session):
     try:
-        print()
-
         #total paid by user_id in this group
         total_paid = (
             db.query(func.coalesce(func.sum(Expense.amount), 0.0))
@@ -115,8 +155,27 @@ def calculate_balance(user: User, group_id: int, db: Session):
         return balance
 
     except Exception as e:
-        logger.error(f"Error calculating balances: {e}")
+        logger.error(f"Error in calculate balance service: {e}")
         raise
 
+def create_group_invite_service(user_id: int, group_id: int, db: Session, expires_at=None) -> GroupInviteOut:
+    try:
+        print()
+        # invite = GroupInvite(group=group, created_by=user)
+        token = secrets.token_urlsafe(16)
+        invite = GroupInvite(
+            group_id=group_id,
+            created_by_id=user_id,
+            token=token,
+            expires_at=expires_at
+        )
+        db.add(invite)
+        db.commit()
+        db.refresh(invite)
+        return invite
 
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error in group invite service: {e}")
+        raise
 
