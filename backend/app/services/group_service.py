@@ -10,7 +10,7 @@ from urllib.parse import urlparse, parse_qs
 from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers, GroupInvite
 from app.db.schemas import GroupOut, GroupShortOut, UserSummaryOut, GroupInviteOut
 from app.db.session import get_db
-from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError
+from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError
 from app.core.logger import get_module_logger
 
 
@@ -36,10 +36,7 @@ def get_full_group_details(group_id: int, db: Session) -> GroupOut:
 
         if not group_details:
             logger.warning("group lookup failed", extra={"group_id": group_id})
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Group not found",
-            )
+            raise GroupNotFoundError from e
 
         return group_details
     except Exception as e:
@@ -55,8 +52,11 @@ def check_join_group(group_name: str, group_pw: str, db: Session) -> int:
             .first()
         )
 
-        if group:
-            return group.id
+        if not group:
+            logger.warning("group lookup failed", extra={"group_name": group_name})
+            raise GroupNotFoundError from e
+
+        return group.id
 
     except Exception as e:
         logger.error(f"Error checking join group: {e}")
@@ -111,7 +111,7 @@ def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
         group.member_associations.append(new_member)
 
         db.add(new_member)
-        db.commit()
+        db.flush() #best practice; only commit and rollback endpoint as it owns request lifecycle
         db.refresh(new_member)
         return get_full_group_details(group_id=group_id, db=db)
     except Exception as e:

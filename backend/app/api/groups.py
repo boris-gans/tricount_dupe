@@ -10,7 +10,7 @@ from app.db.session import get_db
 from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut, GroupBalancesOut, GroupInviteOut
 from app.db.models import Group, User, GroupMembers
 from app.services.group_service import get_full_group_details, check_join_group, check_link_join, get_short_group_details, calculate_balance, add_user_group, create_group_invite_service
-from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError
+from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError
 from app.core.security import get_current_user, get_current_group, GroupContext
 from app.core.logger import get_request_logger
 
@@ -47,7 +47,15 @@ def create_group(
     except GroupFullDetailsError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP
+            status_code=status.HTTP_500_INTERNAL_ERROR,
+            detail="Error polling db for group details"
+        )
+    
+    except GroupNotFoundError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Group not found"
         )
 
     except Exception as e:
@@ -64,22 +72,31 @@ def join_group(
     try:
         logger.debug("join group attempt", extra={"type": group.pw_auth if group.pw_auth else group.link_auth})
         group_id = check_join_group(group_name=group.pw_auth.group_name, group_pw=group.pw_auth.group_pw, db=db) if group.pw_auth else check_link_join(token_link=group.link_auth, db=db)
-        if group_id:
-            joined_group_details = add_user_group(group_id=group_id, user=current_user, db=db)
+        # group not found error raised instead of checking group_id val
+        joined_group_details = add_user_group(group_id=group_id, user=current_user, db=db)
+        db.commit()
 
-            for member in joined_group_details.members:
-                member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
-            return joined_group_details
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Group not found",
-            )
+        for member in joined_group_details.members:
+            member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
+            # this is only querying, no db commit needed
+        return joined_group_details
 
+    except GroupNotFoundError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Group not found"
+        ) 
+    except GroupAddUserError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_ERROR,
+            detail="Error adding user to group relationship"
+        )
     except Exception as e:
         db.rollback()
         logger.error(f"error in join group endpoint: {e}")
-        raise
+        raise HTTPException(status_code=500, detail="Unexpected server error")
 
 
 @router.get("/view-short", response_model=List[GroupShortOut])
