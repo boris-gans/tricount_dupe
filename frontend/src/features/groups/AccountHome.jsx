@@ -61,17 +61,26 @@ function CreateGroupDialog({ open, onOpenChange, onSubmit }) {
   const [groupPw, setGroupPw] = useState('')
   const [emoji, setEmoji] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(null)
+
+  useEffect(() => {
+    if (!open) {
+      setErrorMessage(null)
+      setIsLoading(false)
+    }
+  }, [open])
 
   async function handleSubmit(e) {
     e.preventDefault()
     setIsLoading(true)
     try {
+      setErrorMessage(null)
       await onSubmit({ name, group_pw: groupPw, emoji: emoji || null })
       setName('')
       setGroupPw('')
       setEmoji('')
     } catch (err) {
-      alert(err.message || 'Failed to create group')
+      setErrorMessage(err.message || 'Failed to create group')
     } finally {
       setIsLoading(false)
     }
@@ -111,6 +120,7 @@ function CreateGroupDialog({ open, onOpenChange, onSubmit }) {
             <Label>Choose an emoji (optional)</Label>
             <EmojiPicker selectedEmoji={emoji} onEmojiSelect={setEmoji} />
           </div>
+          {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="ghost" disabled={isLoading}>
@@ -132,6 +142,14 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
   const [groupName, setGroupName] = useState('')
   const [groupPw, setGroupPw] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState(null)
+
+  useEffect(() => {
+    if (!open) {
+      setErrorMessage(null)
+      setIsLoading(false)
+    }
+  }, [open])
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -140,6 +158,7 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
       const trimmedLink = inviteLink.trim()
 
       if (trimmedLink) {
+        setErrorMessage(null)
         await onSubmit({
           link_auth: trimmedLink,
         })
@@ -150,11 +169,12 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
       }
 
       if (groupName === '' || groupPw === '') {
-        alert('Provide either an invite link or a group name and password')
+        setErrorMessage('Provide either an invite link or a group name and password')
         setIsLoading(false)
         return
       }
 
+      setErrorMessage(null)
       await onSubmit({
         pw_auth: {
           group_name: groupName,
@@ -165,7 +185,7 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
       setGroupName('')
       setGroupPw('')
     } catch (err) {
-      alert(err.message || 'Failed to join group')
+      setErrorMessage(err.message || 'Failed to join group')
     } finally {
       setIsLoading(false)
     }
@@ -218,6 +238,7 @@ function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
               required={!inviteLink.trim()}
             />
           </div>
+          {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
           <DialogFooter>
             <DialogClose asChild>
               <Button type="button" variant="ghost" disabled={isLoading}>

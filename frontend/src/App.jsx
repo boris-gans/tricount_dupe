@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Routes, Route, Navigate, Link, useNavigate } from 'react-router-dom'
 import { useAuth } from './AuthContext.jsx'
 import AccountHome from './features/groups/AccountHome.jsx'
@@ -78,6 +79,7 @@ function Landing() {
 function Login() {
   const { login, isLoading } = useAuth()
   const navigate = useNavigate()
+  const [error, setError] = useState(null)
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -85,10 +87,11 @@ function Login() {
     const email = form.get('email')
     const pw = form.get('pw')
     try {
+      setError(null)
       await login({ email, pw })
       navigate('/account')
     } catch (err) {
-      alert(err.message || 'Login failed')
+      setError(err.message || 'Login failed')
     }
   }
 
@@ -108,6 +111,7 @@ function Login() {
               <Label htmlFor="pw">Password</Label>
               <Input id="pw" name="pw" type="password" placeholder="••••••••" required />
             </div>
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" disabled={isLoading}>
               {isLoading ? 'Loading…' : 'Log in'}
             </Button>
@@ -129,6 +133,7 @@ function Login() {
 function Signup() {
   const { signup, isLoading } = useAuth()
   const navigate = useNavigate()
+  const [error, setError] = useState(null)
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -137,10 +142,11 @@ function Signup() {
     const email = form.get('email')
     const pw = form.get('pw')
     try {
+      setError(null)
       await signup({ name, email, pw })
       navigate('/account')
     } catch (err) {
-      alert(err.message || 'Signup failed')
+      setError(err.message || 'Signup failed')
     }
   }
 
@@ -164,6 +170,7 @@ function Signup() {
               <Label htmlFor="signup-pw">Password</Label>
               <Input id="signup-pw" name="pw" type="password" placeholder="••••••••" required />
             </div>
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <Button type="submit" disabled={isLoading}>
               {isLoading ? 'Creating…' : 'Sign up'}
             </Button>

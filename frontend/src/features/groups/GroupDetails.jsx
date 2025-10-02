@@ -163,6 +163,8 @@ export default function GroupDetails() {
   const [inviteDialogOpen, setInviteDialogOpen] = useState(false)
   const [inviteUrl, setInviteUrl] = useState('')
   const [copySuccess, setCopySuccess] = useState(false)
+  const [inviteError, setInviteError] = useState(null)
+  const [copyError, setCopyError] = useState(null)
   const copyTimeoutRef = useRef(null)
   const memberMapKey = useMemo(() => `memberNameToId:${decodedName}`, [decodedName])
 
@@ -263,6 +265,7 @@ export default function GroupDetails() {
 
   useEffect(() => {
     setCopySuccess(false)
+    setCopyError(null)
     if (copyTimeoutRef.current) {
       clearTimeout(copyTimeoutRef.current)
       copyTimeoutRef.current = null
@@ -374,6 +377,9 @@ export default function GroupDetails() {
     if (!groupId) return
     setIsInviteLoading(true)
     try {
+      setInviteError(null)
+      setCopyError(null)
+      setCopySuccess(false)
       const data = await createGroupInviteLink(groupId)
       const token = data?.token
       if (!token) {
@@ -385,7 +391,7 @@ export default function GroupDetails() {
     } catch (err) {
       console.error('Failed to create invite link', err)
       const message = err instanceof Error ? err.message : 'Failed to create invite link'
-      alert(message)
+      setInviteError(message)
     } finally {
       setIsInviteLoading(false)
     }
@@ -394,6 +400,7 @@ export default function GroupDetails() {
   async function handleCopyInvite() {
     if (!inviteUrl) return
     try {
+      setCopyError(null)
       await navigator.clipboard.writeText(inviteUrl)
       setCopySuccess(true)
       if (copyTimeoutRef.current) {
@@ -404,7 +411,9 @@ export default function GroupDetails() {
       }, 2000)
     } catch (err) {
       console.error('Failed to copy invite link', err)
-      alert('Unable to copy link. Please copy it manually.')
+      const message = err instanceof Error ? err.message : 'Unable to copy link. Please copy it manually.'
+      setCopyError(message)
+      setCopySuccess(false)
     }
   }
 
@@ -450,18 +459,21 @@ export default function GroupDetails() {
             <p className="text-sm text-muted-foreground">{group.members?.length || 0} members</p>
           </div>
         </div>
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={handleInviteClick}
-            disabled={isInviteLoading}
-          >
-            {inviteButtonLabel}
-          </Button>
-          <Button type="button" onClick={handleOpenCreateModal} disabled={!group?.members?.length}>
-            <Plus className="mr-2 h-4 w-4" /> Add expense
-          </Button>
+        <div className="flex flex-col gap-2 sm:items-end sm:text-right">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleInviteClick}
+              disabled={isInviteLoading}
+            >
+              {inviteButtonLabel}
+            </Button>
+            <Button type="button" onClick={handleOpenCreateModal} disabled={!group?.members?.length}>
+              <Plus className="mr-2 h-4 w-4" /> Add expense
+            </Button>
+          </div>
+          {inviteError ? <p className="text-sm text-destructive">{inviteError}</p> : null}
         </div>
       </div>
 
@@ -515,6 +527,7 @@ export default function GroupDetails() {
               >
                 {inviteButtonLabel}
               </Button>
+              {inviteError ? <p className="text-sm text-destructive">{inviteError}</p> : null}
             </Card>
           ) : (
             <>
@@ -556,6 +569,7 @@ export default function GroupDetails() {
           setInviteDialogOpen(open)
           if (!open) {
             setCopySuccess(false)
+            setCopyError(null)
             if (copyTimeoutRef.current) {
               clearTimeout(copyTimeoutRef.current)
               copyTimeoutRef.current = null
@@ -576,6 +590,7 @@ export default function GroupDetails() {
               onFocus={(event) => event.target.select()}
             />
           </div>
+          {copyError ? <p className="text-sm text-destructive">{copyError}</p> : null}
           <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-end">
             <Button type="button" variant="outline" onClick={() => setInviteDialogOpen(false)}>
               Close

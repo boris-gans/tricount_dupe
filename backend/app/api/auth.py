@@ -25,24 +25,28 @@ def signup(
     db.commit()
     db.refresh(new_user)
 
+    if not new_user:
+        logger.warning("user signup failed", extra={"email": user.email})
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+
     token = create_access_token(user_id=new_user.id)
 
     logger.info("user signup", extra={"user_id": new_user.id})
-    return {"access_token": token, "user": new_user}
+    return {"access_token": token, "user": new_user} #AuthOut
 
 # login
 @router.post("/login", response_model=AuthOut)
 def login(
-    user_input: UserLogin,
+    user: UserLogin,
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_request_logger),
 ):
-    user = db.query(User).filter(User.email == user_input.email).first()
+    logged_user = db.query(User).filter(User.email == user.email).first()
 
-    if not user or not verify_password(user_input.pw, user.pw):
-        logger.warning("user login failed", extra={"email": user_input.email})
+    if not logged_user or not verify_password(user.pw, logged_user.pw): #db password second (hashed)
+        logger.warning("user login failed", extra={"email": user.email})
         raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_access_token(user_id=user.id)
+    token = create_access_token(user_id=logged_user.id)
 
-    logger.info("user login", extra={"user_id": user.id})
-    return {"access_token": token, "user": user} #AuthOut schema
+    logger.info("user login", extra={"user_id": logged_user.id})
+    return {"access_token": token, "user": logged_user} #AuthOut
