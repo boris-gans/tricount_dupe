@@ -14,7 +14,7 @@ def test_signup_success(client, db_session):
     assert response.status_code == 200
     body = response.json()
     assert "access_token" in body
-    assert body["user"]["email"] == "signup@example.com"
+    assert body["user"]["name"] == "Test"
 
     user = db_session.query(User).filter(User.email == "signup@example.com").first()
     assert user is not None
