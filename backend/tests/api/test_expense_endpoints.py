@@ -119,15 +119,23 @@ def test_edit_expense_success(client, db_session):
     assert body["paid_by"]["id"] == roommate.id
 
 
-def test_edit_expense_not_found(client, auth_header, monkeypatch):
-    headers, _ = auth_header
+def test_edit_expense_not_found(client, db_session, auth_header, monkeypatch):
+    user = _create_user(db_session, "Tester", "tester@example.com")
+    group = Group(name="GhostGroup", pw="pw", emoji=None)
+    db_session.add(group)
+    db_session.flush()
+
+    # Ensure user belongs to the group
+    _ensure_membership(db_session, group, user)
+
+    headers = _auth_headers_for_user(user)
 
     monkeypatch.setattr("app.api.expenses.edit_expense_service", lambda **_: (_ for _ in ()).throw(ExpenseNotFoundError))
 
     response = client.post(
-        "/expenses/1/edit-expense",
+        f"/expenses/{group.id}/edit-expense",
         headers=headers,
-        json={"id": 1, "expense": {"paid_by_id": 1, "amount": 10.0, "description": "", "splits": []}},
+        json={"id": 999, "expense": {"paid_by_id": user.id, "amount": 10.0, "description": "", "splits": []}},
     )
 
     assert response.status_code == 404
