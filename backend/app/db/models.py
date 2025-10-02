@@ -1,12 +1,9 @@
-# sqlalchemy ORM models (unique per group, expense and user)
+# sqlalchemy ORM models
 import secrets
 
 from .base import Base
-from sqlalchemy import (
-    create_engine, Column, Integer, Text, String, Numeric, 
-    TIMESTAMP, ForeignKey, JSON, UniqueConstraint, Enum, Boolean, Float, Table, DateTime, func
-)
-from sqlalchemy.orm import declarative_base, relationship, sessionmaker, joinedload
+from sqlalchemy import Column, Integer, Text, String, ForeignKey, Boolean, Float, DateTime, func
+from sqlalchemy.orm import relationship
 
 
 class User(Base):
@@ -24,8 +21,6 @@ class User(Base):
     expenses_created = relationship("Expense", foreign_keys="Expense.created_by_id", back_populates="created_by")
     created_invites = relationship("GroupInvite", back_populates="created_by")
 
-
-
 class Group(Base):
     __tablename__ = "group"
 
@@ -40,7 +35,6 @@ class Group(Base):
     expenses = relationship("Expense", back_populates="group")
     invites = relationship("GroupInvite", back_populates="group", cascade="all, delete-orphan")
 
-
 class GroupMembers(Base):
     __tablename__ = "group_members"
 
@@ -50,15 +44,12 @@ class GroupMembers(Base):
     user = relationship("User", back_populates="group_associations")
     group = relationship("Group", back_populates="member_associations")
 
-
 class Expense(Base):
     __tablename__ = "expense"
 
     id = Column(Integer, autoincrement=True, primary_key=True)
     amount = Column(Float, nullable=False)
     description = Column(String)
-    photo_url = Column(String) #if i want to add image storage
-    # created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     group_id = Column(Integer, ForeignKey("group.id"), nullable=False)
     paid_by_id = Column(Integer, ForeignKey("user.id"), nullable=False)
@@ -80,7 +71,6 @@ class ExpenseSplit(Base):
 
     expense = relationship("Expense", back_populates="splits")
     user = relationship("User")
-
 
 class GroupInvite(Base):
     __tablename__ = "group_invite"

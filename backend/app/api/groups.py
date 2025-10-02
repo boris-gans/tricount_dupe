@@ -7,10 +7,10 @@ from typing import List
 from datetime import datetime, timedelta, timezone
 
 from app.db.session import get_db
-from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, UserSummaryOut, GroupBalancesOut, GroupInviteOut
+from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, GroupInviteOut
 from app.db.models import Group, User, GroupMembers
 from app.services.group_service import get_full_group_details, check_join_group, check_link_join, get_short_group_details, calculate_balance, add_user_group, create_group_invite_service
-from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError
+from app.core.exceptions import GroupFullDetailsError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError
 from app.core.security import get_current_user, get_current_group, GroupContext
 from app.core.logger import get_request_logger
 

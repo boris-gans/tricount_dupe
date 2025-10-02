@@ -1,24 +1,20 @@
 import logging
 from logging import Logger
 from typing import Optional
-
 from fastapi import Request
 
-_LOG_FORMAT = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-_BASE_LOGGER_NAME = "tricount"
+from app.core.config import settings
 
 
 def setup_logging(level: int = logging.INFO) -> Logger:
-    logger = logging.getLogger(_BASE_LOGGER_NAME)
+    logger = logging.getLogger(settings.base_logger_name)
     if logger.handlers:
         return logger
 
     logger.setLevel(level)
-
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(level)
-    stream_handler.setFormatter(logging.Formatter(_LOG_FORMAT))
-
+    stream_handler.setFormatter(logging.Formatter(settings.log_format))
     logger.addHandler(stream_handler)
     logger.propagate = False
 
@@ -38,5 +34,6 @@ def get_request_logger(request: Request, name: Optional[str] = None) -> Logger:
 
 
 def get_module_logger(name: str) -> Logger:
-    base_logger = logging.getLogger(_BASE_LOGGER_NAME)
+    base_logger = logging.getLogger(settings.base_logger_name)
+
     return base_logger.getChild(name)

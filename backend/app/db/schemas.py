@@ -1,6 +1,5 @@
-# pydantic models
-    # validates incoming request bodies + controlls what field is sent back 
-from pydantic import BaseModel # type: ignore
+# pydantic models, validates request and response bodies
+from pydantic import BaseModel
 from typing import Optional, List
 
 # new user signup; no reuse
@@ -32,8 +31,6 @@ class AuthOut(BaseModel):
     user: UserOut
 
     
-
-
 class ExpenseSplitIn(BaseModel):
     user: UserIn
     amount: float
@@ -46,7 +43,6 @@ class ExpenseCreate(BaseModel):
 
     amount: float
     description: Optional[str]
-    photo_url: Optional[str]
     splits: List[ExpenseSplitIn]
 
 class ExpenseUpdate(BaseModel):
@@ -69,7 +65,6 @@ class ExpenseOut(BaseModel):
     id: int
     amount: float
     description: Optional[str]
-    photo_url: Optional[str]
 
     paid_by: UserOut
     splits: List[ExpenseSplitOut]
@@ -81,10 +76,8 @@ class ExpenseIn(BaseModel):
     id: int
     amount: Optional[float] = None
     description: Optional[str] = None
-    photo_url: Optional[str] = None
     paid_by_id: Optional[int] = None
     splits: Optional[List[ExpenseSplitIn]] = None
-
 
 
 #creating a new group
@@ -126,15 +119,3 @@ class GroupShortOut(BaseModel):
 
 class GroupInviteOut(BaseModel):
     token: str
-
-
-# need a user login; should return all groups and the shorthand info (just name, id, emoji)
-class UserSummaryOut(BaseModel):
-    id: int
-    name: str
-    groups: List[GroupShortOut]
-
-
-class GroupBalancesOut(BaseModel):
-    user: UserOut
-    amount: float
