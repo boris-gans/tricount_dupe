@@ -268,7 +268,9 @@ def test_view_group_failure(client, auth_header, monkeypatch):
 
     response = client.get("/groups/1", headers=headers)
 
-    assert response.status_code == 404
+    assert response.status_code == 403
+    # This test was initially 404 but that doesnt make sense. For my /groups/{group_id} endpoint I use my get_current_group dependency (ctx). 
+    # This ensures the endpoint doesnt even get called if the user isnt a member, and therefore I return a 403 (forbidden) response
 
 
 def test_view_group_full_details_failure(client, db_session, auth_header, monkeypatch):
