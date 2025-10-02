@@ -54,13 +54,13 @@ def check_join_group(group_name: str, group_pw: str, db: Session) -> int:
 
         if not group:
             logger.warning("group lookup failed", extra={"group_name": group_name})
-            raise GroupNotFoundError from e
-
+            raise GroupCheckPwJoinError from e
         return group.id
 
     except Exception as e:
         logger.error(f"Error checking join group: {e}")
-        raise GroupCheckPwJoinError from e
+        raise GroupNotFoundError from e
+    
 
 def check_link_join(token_link: str, db: Session) -> int:
     try:
@@ -76,22 +76,14 @@ def check_link_join(token_link: str, db: Session) -> int:
             .first()
         )
 
-        if not invite:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Invalid invite link"
-            )
 
-        if invite.used or (invite.expires_at and invite.expires_at < datetime.now(timezone.utc)):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invite link has already been used or is expired"
-            )
+        if not invite or invite.used or (invite.expires_at and invite.expires_at < datetime.now(timezone.utc)):
+            raise GroupCheckLinkJoinError
 
         #mark as used
         invite.used = True
         db.add(invite)
-        db.commit()
+        db.flush()
         db.refresh(invite)
         return invite.group_id
 
@@ -171,7 +163,7 @@ def create_group_invite_service(user_id: int, group_id: int, db: Session, expire
             expires_at=expires_at
         )
         db.add(invite)
-        db.commit()
+        db.flush()
         db.refresh(invite)
         return invite
 

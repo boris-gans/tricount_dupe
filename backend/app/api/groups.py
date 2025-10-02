@@ -93,6 +93,18 @@ def join_group(
             status_code=status.HTTP_500_INTERNAL_ERROR,
             detail="Error adding user to group relationship"
         )
+    except GroupCheckLinkJoinError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_INVALID_INPUT,
+            detail="Invite link has already been used or is expired. Request another"
+        ) 
+    except GroupCheckPwJoinError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_INVALID_INPUT,
+            detail="Incorrect password or name"
+        ) 
     except Exception as e:
         db.rollback()
         logger.error(f"error in join group endpoint: {e}")
@@ -108,10 +120,14 @@ def view_all_groups(
     try:
         logger.debug("view all groups attempt", extra={"User id": current_user.id, "User name ": current_user.name})
         return get_short_group_details(user_id=current_user.id, db=db)
-    
+    except GroupShortDetailsError:
+        raise HTTPException(
+            status_code=status.HTTP_404_INTERNAL_ERROR,
+            detail="Error finding user's groups"
+        )
     except Exception as e:
         # no db rollback cause only reading
-        raise
+        raise HTTPException(status_code=500, detail="Unexpected server error")
 
 @router.get("/{group_id}", response_model=GroupOut)
 def view_group(
@@ -119,26 +135,23 @@ def view_group(
     db: Session = Depends(get_db),
     logger: Logger = Depends(get_request_logger),
 ):
-    logger.debug("view group attempt", extra={"group_name": ctx.group.name, "user_name": ctx.user.name})
-    
-    joined_group_details = get_full_group_details(ctx.group.id, db=db)
-    for member in joined_group_details.members:
-        member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
-    return joined_group_details
-
-@router.get("/{group_id}/balances", response_model=List[GroupBalancesOut])
-def view_group_balances(
-    ctx: GroupContext = Depends(get_current_group),
-    db: Session = Depends(get_db),
-    logger: Logger = Depends(get_request_logger),
-):
     try:
-        print()
-        # TO DO: new endpoint for viewing group balances. decouple balances and expenses on frontend
-
+        logger.debug("view group attempt", extra={"group_name": ctx.group.name, "user_name": ctx.user.name})
+        
+        joined_group_details = get_full_group_details(ctx.group.id, db=db)
+        for member in joined_group_details.members:
+            member.balance = calculate_balance(user=member, group_id=joined_group_details.id, db=db)
+        return joined_group_details
+    except GroupFullDetailsError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_ERROR,
+            detail="Error polling db for group details"
+        )
     except Exception as e:
-        logger.error(f"Error geting group balances: {e}")
-
+        logger.error(f"error in view group endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Unexpected server error")
+    
 
 @router.get("/{group_id}/create-invite", response_model=GroupInviteOut)
 def create_group_invite(
@@ -149,6 +162,17 @@ def create_group_invite(
     try:
         now = datetime.now(timezone.utc)
         expires_at = now + timedelta(minutes=10) #10 min token expiry time
-        return create_group_invite_service(user_id=ctx.user.id, group_id=ctx.group.id, db=db, expires_at=expires_at)
+        inv = create_group_invite_service(user_id=ctx.user.id, group_id=ctx.group.id, db=db, expires_at=expires_at)
+        db.commit()
+        return inv
+
+    except GroupInviteLinkCreateError:
+        db.rollback()
+        raise HTTPException(
+            status_code="status.HTTP_500_INTERNAL_ERROR",
+            detail="Error creating group invite"
+        )
     except Exception as e:
+        db.rollback()
         logger.error(f"Error creating group invite: {e}")
+        raise HTTPException(status_code=500, detail="Unexpected server error")
