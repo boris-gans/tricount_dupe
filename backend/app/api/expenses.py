@@ -34,7 +34,7 @@ def create_expense(
     except ExpenseCreationError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating expense"
         ) 
     except Exception as e:
@@ -69,7 +69,7 @@ def edit_expense(
     except ExpenseEditError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating expense"
         ) 
     except Exception as e:

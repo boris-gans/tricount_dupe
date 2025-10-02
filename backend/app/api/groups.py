@@ -48,7 +48,7 @@ def create_group(
     except GroupFullDetailsError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error polling db for group details"
         )
     except GroupNotFoundError:
@@ -90,7 +90,7 @@ def join_group(
     except GroupAddUserError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error adding user to group relationship"
         )
     except GroupCheckLinkJoinError:
@@ -145,7 +145,7 @@ def view_group(
     except GroupFullDetailsError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_ERROR,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error polling db for group details"
         )
     except Exception as e:
@@ -169,7 +169,7 @@ def create_group_invite(
     except GroupInviteLinkCreateError:
         db.rollback()
         raise HTTPException(
-            status_code="status.HTTP_500_INTERNAL_ERROR",
+            status_code="status.HTTP_500_INTERNAL_SERVER_ERROR",
             detail="Error creating group invite"
         )
     except Exception as e:
