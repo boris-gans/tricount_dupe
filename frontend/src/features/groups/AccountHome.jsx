@@ -3,6 +3,20 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../AuthContext.jsx'
 import { createGroup, joinGroup, getUserGroups, getGroupDetails } from '../../services/api.js'
 import { saveGroupDetails, rememberGroupId, syncGroupSummaries } from './groupStorage.js'
+import { Button } from '../../components/ui/button.jsx'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '../../components/ui/dialog.jsx'
+import { Input } from '../../components/ui/input.jsx'
+import { Label } from '../../components/ui/label.jsx'
+import { Card } from '../../components/ui/card.jsx'
+import { cn } from '../../lib/utils.js'
 
 function EmojiPicker({ selectedEmoji, onEmojiSelect }) {
   const emojis = [
@@ -21,25 +35,28 @@ function EmojiPicker({ selectedEmoji, onEmojiSelect }) {
   ]
 
   return (
-    <div className="emoji-picker">
-      <div className="emoji-grid">
-        {emojis.map((emoji) => (
-          <button
-            key={emoji.code}
-            type="button"
-            className={`emoji-option ${selectedEmoji === emoji.code ? 'selected' : ''}`}
-            onClick={() => onEmojiSelect(emoji.code)}
-            title={emoji.name}
-          >
-            {emoji.code}
-          </button>
-        ))}
-      </div>
+    <div className="grid grid-cols-6 gap-2">
+      {emojis.map((emoji) => (
+        <Button
+          key={emoji.code}
+          type="button"
+          variant={selectedEmoji === emoji.code ? 'default' : 'outline'}
+          size="sm"
+          className={cn(
+            'h-10 w-full px-0 text-xl',
+            selectedEmoji === emoji.code && 'shadow-lg'
+          )}
+          onClick={() => onEmojiSelect(emoji.code)}
+          title={emoji.name}
+        >
+          {emoji.code}
+        </Button>
+      ))}
     </div>
   )
 }
 
-function CreateGroupModal({ onClose, onSubmit }) {
+function CreateGroupDialog({ open, onOpenChange, onSubmit }) {
   const [name, setName] = useState('')
   const [groupPw, setGroupPw] = useState('')
   const [emoji, setEmoji] = useState('')
@@ -50,6 +67,9 @@ function CreateGroupModal({ onClose, onSubmit }) {
     setIsLoading(true)
     try {
       await onSubmit({ name, group_pw: groupPw, emoji: emoji || null })
+      setName('')
+      setGroupPw('')
+      setEmoji('')
     } catch (err) {
       alert(err.message || 'Failed to create group')
     } finally {
@@ -58,44 +78,56 @@ function CreateGroupModal({ onClose, onSubmit }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Create New Group</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <input
-            type="text"
-            placeholder="Group name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Group password"
-            value={groupPw}
-            onChange={(e) => setGroupPw(e.target.value)}
-            required
-          />
-          <div className="emoji-section">
-            <label>Choose an emoji (optional)</label>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Create new group</DialogTitle>
+          <DialogDescription>Add a name, password, and optionally choose an emoji.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="group-name">Group name</Label>
+            <Input
+              id="group-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Weekend trip"
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="group-pw">Group password</Label>
+            <Input
+              id="group-pw"
+              type="password"
+              value={groupPw}
+              onChange={(e) => setGroupPw(e.target.value)}
+              placeholder="Secure password"
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label>Choose an emoji (optional)</Label>
             <EmojiPicker selectedEmoji={emoji} onEmojiSelect={setEmoji} />
           </div>
-          <div className="modal-actions">
-            <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn primary" disabled={isLoading}>
-              {isLoading ? 'Creating...' : 'Create Group'}
-            </button>
-          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="ghost" disabled={isLoading}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Creating…' : 'Create group'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
-function JoinGroupModal({ onClose, onSubmit }) {
+function JoinGroupDialog({ open, onOpenChange, onSubmit }) {
   const [groupName, setGroupName] = useState('')
   const [groupPw, setGroupPw] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -104,16 +136,14 @@ function JoinGroupModal({ onClose, onSubmit }) {
     e.preventDefault()
     setIsLoading(true)
     try {
-      // const parsedId = parseInt(groupId, 10)
-      if (groupName === "" || groupPw === "") {
+      if (groupName === '' || groupPw === '') {
         alert('Enter a valid group name and password')
         setIsLoading(false)
         return
       }
-      await onSubmit({
-        group_name: groupName,
-        group_pw: groupPw
-      })
+      await onSubmit({ group_name: groupName, group_pw: groupPw })
+      setGroupName('')
+      setGroupPw('')
     } catch (err) {
       alert(err.message || 'Failed to join group')
     } finally {
@@ -122,47 +152,59 @@ function JoinGroupModal({ onClose, onSubmit }) {
   }
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>Join Existing Group</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
-        </div>
-        <form onSubmit={handleSubmit} className="modal-form">
-          <input
-            type="string"
-            placeholder="Group Name"
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Group password"
-            value={groupPw}
-            onChange={(e) => setGroupPw(e.target.value)}
-            required
-          />
-          <div className="modal-actions">
-            <button type="button" className="btn" onClick={onClose}>Cancel</button>
-            <button type="submit" className="btn primary" disabled={isLoading}>
-              {isLoading ? 'Joining...' : 'Join Group'}
-            </button>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Join existing group</DialogTitle>
+          <DialogDescription>Enter the name and password shared with you.</DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit} className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="join-name">Group name</Label>
+            <Input
+              id="join-name"
+              type="text"
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Weekend trip"
+              required
+            />
           </div>
+          <div className="grid gap-2">
+            <Label htmlFor="join-pw">Group password</Label>
+            <Input
+              id="join-pw"
+              type="password"
+              value={groupPw}
+              onChange={(e) => setGroupPw(e.target.value)}
+              placeholder="Password"
+              required
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="ghost" disabled={isLoading}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? 'Joining…' : 'Join group'}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }
 
 export default function AccountHome() {
-  const { userId, name } = useAuth()
+  const { name } = useAuth()
   const navigate = useNavigate()
   const [groups, setGroups] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [showJoinModal, setShowJoinModal] = useState(false)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [isJoinOpen, setIsJoinOpen] = useState(false)
 
   useEffect(() => {
     loadGroups()
@@ -214,7 +256,7 @@ export default function AccountHome() {
     if (group) {
       saveGroupDetails(group)
       handleNavigateToGroup(group)
-      setShowCreateModal(false)
+      setIsCreateOpen(false)
       await loadGroups()
     }
   }
@@ -224,53 +266,69 @@ export default function AccountHome() {
     if (group) {
       saveGroupDetails(group)
       handleNavigateToGroup(group)
-      setShowJoinModal(false)
+      setIsJoinOpen(false)
       await loadGroups()
     }
   }
 
   return (
-    <div className="container">
-      <h1>Your groups</h1>
-      <p className="muted">{name}</p>
-      <div className="card-row">
-        <button className="btn primary" onClick={() => setShowCreateModal(true)}>Create new group</button>
-        <button className="btn" onClick={() => setShowJoinModal(true)}>Join existing group</button>
+    <section className="container space-y-8 py-12">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-semibold">Your groups</h1>
+        <p className="text-muted-foreground">Logged in as {name}</p>
       </div>
 
-      {error && <div className="empty">{error}</div>}
-      {!error && isLoading && <div className="empty">Loading groups…</div>}
+      <div className="flex flex-wrap gap-3">
+        <Button onClick={() => setIsCreateOpen(true)}>Create new group</Button>
+        <Button variant="outline" onClick={() => setIsJoinOpen(true)}>Join existing group</Button>
+      </div>
+
+      {error && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-4 text-sm text-destructive">
+          {error}
+        </div>
+      )}
+
+      {!error && isLoading && (
+        <div className="rounded-lg border border-dashed border-muted/50 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+          Loading groups…
+        </div>
+      )}
+
       {!error && !isLoading && groups.length === 0 && (
-        <div className="empty">No groups yet.</div>
+        <div className="rounded-lg border border-dashed border-muted/50 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+          No groups yet.
+        </div>
       )}
 
       {!error && !isLoading && groups.length > 0 && (
-        <div className="group-grid">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {groups.map((group) => (
-            <button
-              key={group.id}
-              className="group-card"
-              onClick={() => handleNavigateToGroup(group)}
-            >
-              <span className="group-emoji">{group.emoji || '👥'}</span>
-              <span className="group-name">{group.name}</span>
-            </button>
+            <Card key={group.id} className="transition hover:border-primary/70 hover:shadow-lg">
+              <button
+                type="button"
+                onClick={() => handleNavigateToGroup(group)}
+                className="flex w-full items-center gap-4 rounded-xl px-4 py-5 text-left"
+              >
+                <span className="text-3xl">{group.emoji || '👥'}</span>
+                <span className="text-lg font-medium">{group.name}</span>
+              </button>
+            </Card>
           ))}
         </div>
       )}
 
-      {showCreateModal && (
-        <CreateGroupModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={handleCreateGroup}
-        />
-      )}
-      {showJoinModal && (
-        <JoinGroupModal
-          onClose={() => setShowJoinModal(false)}
-          onSubmit={handleJoinGroup}
-        />
-      )}
-    </div>
+      <CreateGroupDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onSubmit={handleCreateGroup}
+      />
+
+      <JoinGroupDialog
+        open={isJoinOpen}
+        onOpenChange={setIsJoinOpen}
+        onSubmit={handleJoinGroup}
+      />
+    </section>
   )
 }

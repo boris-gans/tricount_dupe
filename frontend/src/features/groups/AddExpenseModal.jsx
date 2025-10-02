@@ -1,5 +1,26 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createGroupExpense, updateGroupExpense } from '../../services/api.js'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '../../components/ui/dialog.jsx'
+import { Button } from '../../components/ui/button.jsx'
+import { Input } from '../../components/ui/input.jsx'
+import { Label } from '../../components/ui/label.jsx'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../../components/ui/select.jsx'
+import { Checkbox } from '../../components/ui/checkbox.jsx'
+import { cn } from '../../lib/utils.js'
 
 const roundTwo = (value) => Math.round((value + Number.EPSILON) * 100) / 100
 
@@ -311,97 +332,123 @@ export default function AddExpenseModal({
       .finally(() => setIsSubmitting(false))
   }
 
-  const headerLabel = mode === 'edit' ? 'Edit Expense' : 'Add Expense'
-  const actionLabel = mode === 'edit' ? 'Edit Expense' : 'Add expense'
+  const headerLabel = mode === 'edit' ? 'Edit expense' : 'Add expense'
+  const actionLabel = mode === 'edit' ? 'Edit expense' : 'Add expense'
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal add-expense-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <h2>{headerLabel}</h2>
-          <button className="close-btn" type="button" onClick={onClose}>×</button>
-        </div>
-        <form className="modal-form" onSubmit={handleSubmit}>
-          <label className="form-field">
-            <span>Description</span>
-            <input
+    <Dialog open onOpenChange={(open) => { if (!open) onClose() }}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>{headerLabel}</DialogTitle>
+          <DialogDescription>Split an expense across members and keep balances up to date.</DialogDescription>
+        </DialogHeader>
+        <form className="grid gap-5" onSubmit={handleSubmit}>
+          <div className="grid gap-2">
+            <Label htmlFor="expense-description">Description</Label>
+            <Input
+              id="expense-description"
               type="text"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What was the expense for?"
               required
             />
-          </label>
-          <label className="form-field">
-            <span>Amount</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={amountInput}
-              onChange={handleAmountChange}
-              placeholder="0.00"
-              required
-            />
-          </label>
-          <label className="form-field">
-            <span>Paid by</span>
-            <select
-              value={paidById ?? ''}
-              onChange={(e) => setPaidById(Number(e.target.value))}
-              required
-            >
-              {members.map((member) => (
-                <option key={member.id} value={member.id}>{member.name}</option>
-              ))}
-            </select>
-          </label>
-          <div className="form-field">
-            <span>Split between</span>
-            <div className="split-list">
+          </div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="grid gap-2">
+              <Label htmlFor="expense-amount">Amount</Label>
+              <Input
+                id="expense-amount"
+                type="number"
+                min="0"
+                step="0.01"
+                value={amountInput}
+                onChange={handleAmountChange}
+                placeholder="0.00"
+                required
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Paid by</Label>
+              <Select
+                value={paidById != null ? String(paidById) : undefined}
+                onValueChange={(value) => setPaidById(Number(value))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select payer" />
+                </SelectTrigger>
+                <SelectContent>
+                  {members.map((member) => (
+                    <SelectItem key={member.id} value={String(member.id)}>
+                      {member.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <div className="space-y-3">
+            <Label>Split between</Label>
+            <div className="space-y-2">
               {splits.map((split) => (
-                <div key={split.id} className={`split-row ${split.isSelected ? '' : 'inactive'}`}>
-                  <div className="split-info">
-                    <span className="split-name">{split.name}</span>
+                <div
+                  key={split.id}
+                  className={cn(
+                    'flex flex-col gap-2 rounded-lg border border-border/80 bg-card/40 p-3 sm:flex-row sm:items-center sm:gap-3',
+                    !split.isSelected && 'opacity-60'
+                  )}
+                >
+                  <div className="flex flex-1 items-center gap-3">
+                    <Checkbox
+                      id={`split-${split.id}`}
+                      checked={split.isSelected}
+                      onCheckedChange={() => toggleParticipant(split.id)}
+                      disabled={isSubmitting}
+                    />
+                    <Label htmlFor={`split-${split.id}`} className="flex-1 text-base font-medium">
+                      {split.name}
+                    </Label>
                     {split.isManual && split.isSelected && (
-                      <button
+                      <Button
                         type="button"
-                        className="split-reset"
+                        size="sm"
+                        variant="ghost"
                         onClick={() => resetManual(split.id)}
+                        disabled={isSubmitting}
                       >
                         Reset
-                      </button>
+                      </Button>
                     )}
                   </div>
-                  <input
+                  <Input
                     type="number"
                     step="0.01"
                     min="0"
                     value={split.isSelected ? split.amount : 0}
                     onChange={(e) => handleManualAmount(split.id, e.target.value)}
                     disabled={!split.isSelected || isSubmitting}
-                    className="split-amount-input"
                   />
-                  <button
-                    type="button"
-                    className={`participant-toggle ${split.isSelected ? 'active' : ''}`}
-                    onClick={() => toggleParticipant(split.id)}
-                    disabled={isSubmitting}
-                    title={split.isSelected ? 'Included' : 'Excluded'}
-                  >
-                    ✓
-                  </button>
                 </div>
               ))}
             </div>
           </div>
-          {error && <div className="form-error">{error}</div>}
-          <div className="modal-actions">
-            <button type="button" className="btn" onClick={onClose} disabled={isSubmitting}>Cancel</button>
-            <button type="submit" className="btn primary" disabled={isSubmitting}>{actionLabel}</button>
-          </div>
+          {error && (
+            <p className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </p>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="ghost" disabled={isSubmitting}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button type="submit" disabled={isSubmitting}>
+              {actionLabel}
+            </Button>
+          </DialogFooter>
         </form>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   )
 }

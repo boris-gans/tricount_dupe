@@ -51,7 +51,10 @@ export function AuthProvider({ children }) {
     setUserId(null)
   }
 
-  const value = useMemo(() => ({ token, userId, name, isAuthenticated: Boolean(token), isLoading, login, signup, logout }), [token, userId, isLoading])
+  const value = useMemo(
+    () => ({ token, userId, name, isAuthenticated: Boolean(token), isLoading, login, signup, logout }),
+    [token, userId, name, isLoading]
+  )
 
   return (
     <AuthContext.Provider value={value}>
@@ -60,10 +63,10 @@ export function AuthProvider({ children }) {
   )
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error('useAuth must be used within AuthProvider')
   return ctx
 }
-
 

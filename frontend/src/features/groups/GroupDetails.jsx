@@ -8,6 +8,12 @@ import {
 } from './groupStorage.js'
 import AddExpenseModal from './AddExpenseModal.jsx'
 import { useAuth } from '../../AuthContext.jsx'
+import { Button } from '../../components/ui/button.jsx'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/tabs.jsx'
+import { Badge } from '../../components/ui/badge.jsx'
+import { Card } from '../../components/ui/card.jsx'
+import { cn } from '../../lib/utils.js'
+import { Pencil, Plus, ReceiptText, Trash2 } from 'lucide-react'
 
 function formatCurrency(amount) {
   if (typeof amount !== 'number') return '—'
@@ -16,31 +22,38 @@ function formatCurrency(amount) {
 
 function ExpenseRow({ expense, onEdit, onDelete }) {
   const title = expense.description || 'Untitled expense'
+
   return (
-    <div className="expense-row">
-      <div className={`expense-photo ${expense.photo_url ? 'has-image' : 'placeholder'}`}>
+    <Card className="flex items-center gap-4 p-4">
+      <div className="flex h-16 w-16 items-center justify-center overflow-hidden rounded-md border border-border/60 bg-muted">
         {expense.photo_url ? (
-          <img src={expense.photo_url} alt={title} />
+          <img src={expense.photo_url} alt={title} className="h-full w-full object-cover" />
         ) : (
-          <span role="img" aria-label="receipt">🧾</span>
+          <ReceiptText className="h-6 w-6 text-muted-foreground" />
         )}
       </div>
-      <div className="expense-content">
-        <div className="expense-title">{title}</div>
-        <div className="expense-meta">
-          <span className="expense-payer">Paid by {expense.paid_by?.name || 'someone'}</span>
-          <span className="expense-amount">{formatCurrency(expense.amount)}</span>
+      <div className="flex flex-1 flex-col gap-1">
+        <span className="text-base font-medium">{title}</span>
+        <div className="flex flex-wrap gap-x-3 text-sm text-muted-foreground">
+          <span>Paid by {expense.paid_by?.name || 'someone'}</span>
+          <span>{formatCurrency(expense.amount)}</span>
         </div>
       </div>
-      <div className="expense-actions">
-        <button type="button" className="icon-btn" onClick={() => onEdit(expense)} title="Edit expense">
-          ✏️
-        </button>
-        <button type="button" className="icon-btn danger" onClick={() => onDelete(expense)} title="Delete expense">
-          🗑️
-        </button>
+      <div className="flex items-center gap-2">
+        <Button type="button" variant="ghost" size="icon" onClick={() => onEdit(expense)}>
+          <Pencil className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="text-destructive hover:text-destructive"
+          onClick={() => onDelete(expense)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </div>
-    </div>
+    </Card>
   )
 }
 
@@ -48,13 +61,27 @@ function BalanceRow({ member }) {
   const amount = formatCurrency(member.balance)
   const status = member.balance > 0 ? 'owes you' : member.balance < 0 ? 'you owe' : 'settled'
   const amountDisplay = member.balance < 0 ? formatCurrency(Math.abs(member.balance)) : amount
+  const badgeClasses = member.balance > 0
+    ? 'border-emerald-500/30 bg-emerald-500/15 text-emerald-300'
+    : member.balance < 0
+      ? 'border-rose-500/30 bg-rose-500/15 text-rose-300'
+      : 'border-muted/50 bg-muted/30 text-muted-foreground'
+  const amountClasses = member.balance > 0
+    ? 'text-emerald-300'
+    : member.balance < 0
+      ? 'text-rose-300'
+      : 'text-muted-foreground'
 
   return (
-    <div className={`balance-row ${member.balance > 0 ? 'positive' : member.balance < 0 ? 'negative' : 'neutral'}`}>
-      <span className="balance-name">{member.name}</span>
-      <span className="balance-status">{status}</span>
-      <span className="balance-amount">{member.balance < 0 ? amountDisplay : amount}</span>
-    </div>
+    <Card className="flex items-center justify-between p-4">
+      <div className="space-y-1">
+        <p className="font-medium">{member.name}</p>
+        <Badge variant="secondary" className={badgeClasses}>
+          {status}
+        </Badge>
+      </div>
+      <span className={cn('text-lg font-semibold', amountClasses)}>{member.balance < 0 ? amountDisplay : amount}</span>
+    </Card>
   )
 }
 
@@ -217,92 +244,88 @@ export default function GroupDetails() {
 
   if (isLoading) {
     return (
-      <div className="container">
-        <div className="empty">Loading group details…</div>
-      </div>
+      <section className="container py-12">
+        <div className="rounded-lg border border-dashed border-muted/50 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+          Loading group details…
+        </div>
+      </section>
     )
   }
 
   if (error) {
     return (
-      <div className="container">
-        <div className="empty">{error}</div>
-      </div>
+      <section className="container py-12">
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 p-6 text-center text-sm text-destructive">
+          {error}
+        </div>
+      </section>
     )
   }
 
   if (!group) {
     return (
-      <div className="container">
-        <div className="empty">Group data is unavailable.</div>
-      </div>
+      <section className="container py-12">
+        <div className="rounded-lg border border-dashed border-muted/50 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+          Group data is unavailable.
+        </div>
+      </section>
     )
   }
 
   return (
-    <div className="container group-layout">
-      <div className="group-header">
-        <div className="group-emoji-large">{group.emoji || '👥'}</div>
-        <div>
-          <h1 className="group-title">{group.name}</h1>
-          <p className="muted">{group.members?.length || 0} members</p>
-        </div>
-      </div>
-
-      <div className="group-tabs">
-        <button
-          className={`group-tab ${activeTab === 'expenses' ? 'active' : ''}`}
-          onClick={() => setActiveTab('expenses')}
-        >
-          Expenses
-        </button>
-        <button
-          className={`group-tab ${activeTab === 'balances' ? 'active' : ''}`}
-          onClick={() => setActiveTab('balances')}
-        >
-          Balances
-        </button>
-      </div>
-
-      {activeTab === 'expenses' ? (
-        <>
-          <div className="group-actions">
-            <button
-              type="button"
-              className="btn add-expense-btn"
-              onClick={handleOpenCreateModal}
-              disabled={!group?.members?.length}
-            >
-              <span className="plus-icon">+</span>
-              Add Expense
-            </button>
+    <section className="container space-y-8 py-12">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-4">
+          <div className="grid h-16 w-16 place-items-center rounded-xl border border-border/80 bg-muted text-3xl">
+            {group.emoji || '👥'}
           </div>
-          <div className="expense-list">
-            {group.expenses?.length ? (
-              group.expenses.map((expense) => (
+          <div className="space-y-1">
+            <h1 className="text-3xl font-semibold">{group.name}</h1>
+            <p className="text-sm text-muted-foreground">{group.members?.length || 0} members</p>
+          </div>
+        </div>
+        <Button type="button" onClick={handleOpenCreateModal} disabled={!group?.members?.length}>
+          <Plus className="mr-2 h-4 w-4" /> Add expense
+        </Button>
+      </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="expenses">Expenses</TabsTrigger>
+          <TabsTrigger value="balances">Balances</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="expenses" className="space-y-4">
+          {group.expenses?.length ? (
+            <div className="space-y-3">
+              {group.expenses.map((expense) => (
                 <ExpenseRow
                   key={expense.id}
                   expense={expense}
                   onEdit={handleOpenEditModal}
                   onDelete={handleDeleteExpense}
                 />
-              ))
-            ) : (
-              <div className="empty">No expenses recorded yet.</div>
-            )}
-          </div>
-        </>
-      ) : (
-        <div className="balance-list">
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-muted/50 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+              No expenses recorded yet.
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="balances" className="space-y-3">
           {group.members?.length ? (
             group.members.map((member) => (
               <BalanceRow key={member.id} member={member} />
             ))
           ) : (
-            <div className="empty">No balances to show.</div>
+            <div className="rounded-lg border border-dashed border-muted/50 bg-muted/20 p-8 text-center text-sm text-muted-foreground">
+              No balances to show.
+            </div>
           )}
-        </div>
-      )}
+        </TabsContent>
+      </Tabs>
 
       {modalState && group?.members?.length ? (
         <AddExpenseModal
@@ -315,6 +338,6 @@ export default function GroupDetails() {
           expense={modalState.expense}
         />
       ) : null}
-    </div>
+    </section>
   )
 }

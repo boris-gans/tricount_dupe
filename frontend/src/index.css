@@ -1,69 +1,45 @@
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.92);
-  background-color: #0b0c10;
+@layer base {
+  :root {
+    --background: 221 39% 7%;
+    --foreground: 220 27% 90%;
+    --card: 221 39% 9%;
+    --card-foreground: 220 27% 90%;
+    --popover: 221 39% 9%;
+    --popover-foreground: 220 27% 90%;
+    --primary: 220 100% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 218 25% 22%;
+    --secondary-foreground: 220 27% 90%;
+    --muted: 220 23% 18%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 215 63% 48%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214 23% 24%;
+    --input: 214 23% 24%;
+    --ring: 217 91% 60%;
+    --radius: 0.75rem;
+  }
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  * {
+    @apply border-border;
+  }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
+  body {
+    @apply bg-background text-foreground antialiased;
+    min-height: 100vh;
+  }
 
-body {
-  margin: 0;
-  display: block;
-  min-width: 320px;
-  min-height: 100vh;
-}
+  button {
+    @apply font-medium;
+  }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
+  a {
+    @apply text-primary underline-offset-4 transition-colors hover:underline;
+  }
 }
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-.app { min-height: 100vh; display: flex; flex-direction: column; }
-.nav { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-bottom: 1px solid #1f242d; background: #0e1117; position: sticky; top: 0; }
-.brand { font-weight: 700; color: #9ecbff; }
-.spacer { flex: 1; }
-.btn { background: #1f2937; border: 1px solid #2b3443; color: #e5e7eb; padding: 0.5rem 0.9rem; border-radius: 8px; }
-.btn.primary { background: #2563eb; border-color: #2563eb; }
-.container { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
-.actions { display: flex; gap: 1rem; margin-top: 1rem; }
-.auth-card { max-width: 420px; margin: 3rem auto; padding: 2rem; background: #0e1117; border: 1px solid #1f242d; border-radius: 12px; }
-.auth-card form { display: grid; gap: 0.75rem; }
-.auth-card input { background: #0b0c10; border: 1px solid #2b3443; color: #e5e7eb; padding: 0.7rem 0.8rem; border-radius: 8px; }
-.muted { color: #9aa4b2; }
-.card-row { display: flex; gap: 0.75rem; margin: 1rem 0 2rem; }
-.empty { color: #94a3b8; border: 1px dashed #2b3443; padding: 1.25rem; border-radius: 8px; }

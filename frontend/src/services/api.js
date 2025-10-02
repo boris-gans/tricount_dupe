@@ -20,17 +20,14 @@ async function handleResponse(res) {
     }
     if (!res.ok) {
         let message = "Request failed";
-        try {
-            const data = await res.json();
-            message = data.detail || data.message || message;
-        } catch (_) {}
+        const errorPayload = await res.clone().json().catch(() => null);
+        if (errorPayload?.detail || errorPayload?.message) {
+            message = errorPayload.detail || errorPayload.message || message;
+        }
         throw new Error(message);
     }
-    try {
-        return await res.json();
-    } catch (_) {
-        return null;
-    }
+    const data = await res.json().catch(() => null);
+    return data;
 }
 
 export async function apiGet(path) {
