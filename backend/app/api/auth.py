@@ -3,11 +3,10 @@ from sqlalchemy.orm import Session
 from logging import Logger
 
 from app.db.session import get_db
-from app.db.schemas import UserOut, UserCreate, UserSummaryOut, UserIn, AuthOut, UserLogin
+from app.db.schemas import UserCreate, AuthOut, UserLogin
 from app.db.models import User
 from app.core.exceptions import AuthJwtCreationError, AuthCredentialsError
-from app.core.security import hash_password, verify_password, create_access_token, decode_access_token
-from app.core.config import settings
+from app.core.security import hash_password, verify_password, create_access_token
 from app.core.logger import get_request_logger
 
 

@@ -3,13 +3,11 @@ import secrets
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, exists
-from fastapi import Depends, HTTPException, status
+from sqlalchemy import func
 from urllib.parse import urlparse, parse_qs
 
 from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers, GroupInvite
-from app.db.schemas import GroupOut, GroupShortOut, UserSummaryOut, GroupInviteOut
-from app.db.session import get_db
+from app.db.schemas import GroupOut, GroupShortOut, GroupInviteOut
 from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError
 from app.core.logger import get_module_logger
 

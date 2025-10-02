@@ -20,14 +20,6 @@ class ExpenseNotFoundError(Exception):
 # ******************************************************************************************************************************************************************************************
 # GROUPS
 # ******************************************************************************************************************************************************************************************
-class GroupCreationError(Exception):
-    """When a group cant be created"""
-    pass
-
-class GroupJoinError(Exception):
-    "When a group cant be joined"
-    pass
-
 class GroupFullDetailsError(Exception):
     "When get_full_group_details service fails"
     pass
@@ -59,8 +51,6 @@ class GroupInviteLinkCreateError(Exception):
 # generic/reusable
 class GroupNotFoundError(Exception):
     """generic error msg for invalid inputs"""
-
-
 
 
 # ******************************************************************************************************************************************************************************************

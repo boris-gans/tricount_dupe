@@ -3,9 +3,8 @@ from fastapi import HTTPException, Depends, status
 from passlib.context import CryptContext
 from datetime import datetime, timezone, timedelta
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from jose import jwt, ExpiredSignatureError, JWTError
-from typing import Tuple
 from dataclasses import dataclass
 
 from app.core.config import settings
@@ -45,12 +44,17 @@ def decode_access_token(token: str):
         raise HTTPException(status_code=401, detail="Token has expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
-    
+
+
 # dependency for jwt
 def get_current_user(
         creds: HTTPAuthorizationCredentials = Depends(bearer_scheme),
         db: Session = Depends(get_db),
 ) -> User:
+    """
+        Because this is a dependency it needs a HTTPException rather than a custom exception. 
+        This ensures fastapi stops the request immediatley and endpoints dont get called
+    """
     payload = decode_access_token(creds.credentials)
     user_id = payload.get("sub")
     if not user_id:
@@ -58,19 +62,25 @@ def get_current_user(
     
     user = db.query(User).get(int(user_id)) #return matching user
     if not user:
-        raise HTTPException(status_code=401, detail="User not found")
+        raise HTTPException(status_code=403, detail="User not found / doesn't exist")
     
     return user #since this is for internal use only, fine to return entire user object
-                # just need to make sure i respond with UserOut
 
+
+# dependency using jwt and parameter group id
 def get_current_group(
         group_id: int,
         db: Session = Depends(get_db),
         current_user: User = Depends(get_current_user),
 ) -> GroupContext: #verifying that User is part of Group
+    """
+        Because this is a dependency it needs a HTTPException rather than a custom exception. 
+        This ensures fastapi stops the request immediatley and endpoints dont get called
+    """
+
     group = (
         db.query(Group)
-        .join(Group.member_associations)  # join groups → group_members
+        .join(Group.member_associations)  # join groups to group_members
         .filter(
             Group.id == group_id,
             GroupMembers.user_id == current_user.id
