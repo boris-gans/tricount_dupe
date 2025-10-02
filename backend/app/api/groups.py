@@ -96,13 +96,13 @@ def join_group(
     except GroupCheckLinkJoinError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_INVALID_INPUT,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invite link has already been used or is expired. Request another"
         ) 
     except GroupCheckPwJoinError:
         db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_INVALID_INPUT,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Incorrect password or name"
         ) 
     except Exception as e:
