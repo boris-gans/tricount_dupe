@@ -137,12 +137,12 @@ def test_add_user_group_failure(db_session, monkeypatch):
     db_session.add_all([user, group])
     db_session.flush()
 
-    def broken_flush():
+    def broken_flush(*args, **kwargs):
         raise RuntimeError("cannot flush")
 
     monkeypatch.setattr(db_session, "flush", broken_flush)
 
-    with pytest.raises(GroupAddUserError):
+    with pytest.raises(GroupAddUserError): #not sure why this exception is not being raised
         add_user_group(group_id=group.id, user=user, db=db_session)
 
 
@@ -228,10 +228,10 @@ def test_create_group_invite_service_failure(db_session, monkeypatch):
     db_session.add_all([user, group])
     db_session.flush()
 
-    def broken_flush():
+    def broken_flush(*args, **kwargs):
         raise RuntimeError("persist failed")
 
     monkeypatch.setattr(db_session, "flush", broken_flush)
 
-    with pytest.raises(GroupInviteLinkCreateError):
+    with pytest.raises(GroupInviteLinkCreateError): #not sure why this exception is not being raised
         create_group_invite_service(user_id=user.id, group_id=group.id, db=db_session)

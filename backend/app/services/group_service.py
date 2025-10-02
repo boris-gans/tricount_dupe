@@ -151,8 +151,6 @@ def calculate_balance(user: User, group_id: int, db: Session):
 
 def create_group_invite_service(user_id: int, group_id: int, db: Session, expires_at=None) -> GroupInviteOut:
     try:
-        print()
-        # invite = GroupInvite(group=group, created_by=user)
         token = secrets.token_urlsafe(16)
         invite = GroupInvite(
             group_id=group_id,
