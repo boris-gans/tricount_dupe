@@ -5,13 +5,13 @@ from sqlalchemy.orm import Session # type: ignore
 from logging import Logger
 
 from app.db.session import get_db
-from app.db.schemas import ExpenseSplitIn, ExpenseCreate, ExpenseOut, ExpenseSplitOut, ExpenseUpdate, GroupOut, ExpenseDelete
-from app.db.models import Expense, ExpenseSplit, User, Group
+from app.db.schemas import ExpenseCreate, ExpenseOut, ExpenseUpdate, ExpenseDelete
+from app.db.models import Expense
 from app.core.logger import get_request_logger
 from app.core.exceptions import ExpenseCreationError, ExpenseEditError, ExpenseNotFoundError
 
 from app.services.expense_service import create_expense_service, edit_expense_service
-from app.core.security import get_current_user, get_current_group, GroupContext
+from app.core.security import get_current_group, GroupContext
 
 router = APIRouter()
 
