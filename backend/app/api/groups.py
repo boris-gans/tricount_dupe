@@ -44,23 +44,23 @@ def create_group(
             member.balance = calculate_balance(user=member, group_id=group_details.id, db=db)
 
         return group_details
+    
     except GroupFullDetailsError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_ERROR,
             detail="Error polling db for group details"
         )
-    
     except GroupNotFoundError:
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Group not found"
         )
-
     except Exception as e:
         db.rollback()
-        raise
+        logger.error(f"error in create group endpoint: {e}")
+        raise HTTPException(status_code=500, detail="Unexpected server error")
 
 @router.post("/join", response_model=GroupOut)
 def join_group(

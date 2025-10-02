@@ -64,5 +64,15 @@ class GroupNotFoundError(Exception):
 
 
 # ******************************************************************************************************************************************************************************************
-# USERS
+# AUTH
 # ******************************************************************************************************************************************************************************************
+class AuthJwtCreationError(Exception):
+    """
+    Important exception for auth to check jwt creation worked. 
+    Dont want to pass an empty token to frontend as app relies on it
+    """
+    pass
+
+class AuthCredentialsError(Exception):
+    """Generic credentials check"""
+    pass
