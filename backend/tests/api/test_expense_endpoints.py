@@ -68,19 +68,28 @@ def test_create_expense_success(client, db_session):
     assert stored is not None
 
 
-def test_create_expense_failure(client, auth_header, monkeypatch):
-    headers, user = auth_header
+def test_create_expense_failure(client, auth_header, db_session, monkeypatch):
+    user = _create_user(db_session, "Tester", "tester@example.com")
+    group = Group(name="GhostGroup", pw="pw", emoji=None)
+    db_session.add(group)
+    db_session.flush()
+
+    # Ensure user belongs to the group
+    _ensure_membership(db_session, group, user)
+
+    headers = _auth_headers_for_user(user)
+
 
     monkeypatch.setattr("app.api.expenses.create_expense_service", lambda **_: (_ for _ in ()).throw(ExpenseCreationError))
 
     response = client.post(
-        "/expenses/1/create-expense",
+        f"/expenses/{group.id}/create-expense",
         headers=headers,
         json={"paid_by_id": user.id, "amount": 10.0, "description": "", "splits": []},
     )
 
-    assert response.status_code == 403 #should be 403 because the user isnt part of group (get_current_group dependency)
-    assert response.json()["detail"] == "User does not have access to this group"
+    assert response.status_code == 400
+    assert response.json()["detail"] == "Error creating expense"
 
 
 def test_edit_expense_success(client, db_session):
@@ -142,15 +151,23 @@ def test_edit_expense_not_found(client, db_session, auth_header, monkeypatch):
     assert response.json()["detail"] == "Expense not found"
 
 
-def test_edit_expense_failure(client, auth_header, monkeypatch):
-    headers, _ = auth_header
+def test_edit_expense_failure(client, db_session, auth_header, monkeypatch):
+    user = _create_user(db_session, "Tester", "tester@example.com")
+    group = Group(name="GhostGroup", pw="pw", emoji=None)
+    db_session.add(group)
+    db_session.flush()
+
+    # Ensure user belongs to the group
+    _ensure_membership(db_session, group, user)
+
+    headers = _auth_headers_for_user(user)
 
     monkeypatch.setattr("app.api.expenses.edit_expense_service", lambda **_: (_ for _ in ()).throw(ExpenseEditError))
 
     response = client.post(
-        "/expenses/1/edit-expense",
+        f"/expenses/{group.id}/edit-expense",
         headers=headers,
-        json={"id": 1, "expense": {"paid_by_id": 1, "amount": 10.0, "description": "", "splits": []}},
+        json={"id": 1, "expense": {"paid_by_id": user.id, "amount": 10.0, "description": "", "splits": []}},
     )
 
     assert response.status_code == 500
@@ -181,11 +198,19 @@ def test_delete_expense_success(client, db_session):
     assert remaining is None
 
 
-def test_delete_expense_not_found(client, auth_header):
-    headers, _ = auth_header
+def test_delete_expense_not_found(client, db_session, auth_header):
+    user = _create_user(db_session, "Tester", "tester@example.com")
+    group = Group(name="GhostGroup", pw="pw", emoji=None)
+    db_session.add(group)
+    db_session.flush()
+
+    # Ensure user belongs to the group
+    _ensure_membership(db_session, group, user)
+
+    headers = _auth_headers_for_user(user)
 
     response = client.post(
-        "/expenses/1/delete-expense",
+        f"/expenses/{group.id}/delete-expense",
         headers=headers,
         json={"id": 999},
     )
