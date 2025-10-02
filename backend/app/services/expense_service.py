@@ -26,7 +26,6 @@ def create_expense_service(
         expense = Expense(
             amount=new_expense.amount,
             description=new_expense.description,
-            photo_url=new_expense.photo_url,
             paid_by_id=new_expense.paid_by_id,
             group_id=group_id, #already checked and found in security.py
             created_by_id=user_id,
@@ -76,7 +75,6 @@ def edit_expense_service(
         edited_expense = expense_update.expense
         expense.amount = edited_expense.amount
         expense.description = edited_expense.description
-        expense.photo_url = edited_expense.photo_url
 
 
         if edited_expense.splits is not None:

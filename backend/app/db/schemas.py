@@ -38,9 +38,6 @@ class ExpenseSplitIn(BaseModel):
 # new expense
 class ExpenseCreate(BaseModel):
     paid_by_id: int #can be any user id, so dont rely on jwt
-    # created_by_id: int
-    # group_id: int
-
     amount: float
     description: Optional[str]
     splits: List[ExpenseSplitIn]
