@@ -10,6 +10,7 @@ from urllib.parse import urlparse, parse_qs
 from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers, GroupInvite
 from app.db.schemas import GroupOut, GroupShortOut, UserSummaryOut, GroupInviteOut
 from app.db.session import get_db
+from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError
 from app.core.logger import get_module_logger
 
 
@@ -43,7 +44,7 @@ def get_full_group_details(group_id: int, db: Session) -> GroupOut:
         return group_details
     except Exception as e:
         logger.error(f"Error loading group details: {e}")
-        raise
+        raise GroupFullDetailsError from e
 
 def check_join_group(group_name: str, group_pw: str, db: Session) -> int:
     try:
@@ -59,7 +60,7 @@ def check_join_group(group_name: str, group_pw: str, db: Session) -> int:
 
     except Exception as e:
         logger.error(f"Error checking join group: {e}")
-        raise
+        raise GroupCheckPwJoinError from e
 
 def check_link_join(token_link: str, db: Session) -> int:
     try:
@@ -97,7 +98,7 @@ def check_link_join(token_link: str, db: Session) -> int:
     except Exception as e:
         db.rollback() #cause we change used field
         logger.error(f"Error checking link join: {e}")
-        raise
+        raise GroupCheckLinkJoinError from e
 
 def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
     try:
@@ -116,7 +117,7 @@ def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
     except Exception as e:
         db.rollback()
         logger.error(f"Error adding user to group: {e}")
-        raise
+        raise GroupAddUserError from e
 
 
 def get_short_group_details(user_id: int, db: Session) -> list[GroupShortOut]:
@@ -132,7 +133,7 @@ def get_short_group_details(user_id: int, db: Session) -> list[GroupShortOut]:
         return group_list
     except Exception as e:
         logger.error(f"Error getting short group list: {e}")
-        raise
+        raise GroupShortDetailsError from e
 
 def calculate_balance(user: User, group_id: int, db: Session):
     try:
@@ -156,7 +157,7 @@ def calculate_balance(user: User, group_id: int, db: Session):
 
     except Exception as e:
         logger.error(f"Error in calculate balance service: {e}")
-        raise
+        raise GroupCalculateBalanceError from e
 
 def create_group_invite_service(user_id: int, group_id: int, db: Session, expires_at=None) -> GroupInviteOut:
     try:
@@ -177,5 +178,5 @@ def create_group_invite_service(user_id: int, group_id: int, db: Session, expire
     except Exception as e:
         db.rollback()
         logger.error(f"Error in group invite service: {e}")
-        raise
+        raise GroupInviteLinkCreateError from e
 
