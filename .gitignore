@@ -3,8 +3,8 @@
 **/__pycache__
 __pycache__/
 
-frontend/eslint.config.js
-frontend/vite.config.js
+# frontend/eslint.config.js
+# frontend/vite.config.js
 
 # */package-lock.json
 # */package.json
@@ -14,7 +14,7 @@ frontend/vite.config.js
 
 .venv
 
-*.svg
+# *.svg
 .env
 
 # ai-prompts.md
