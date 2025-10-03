@@ -40,6 +40,10 @@ class GroupAddUserError(Exception):
     """When add_user_group service fails"""
     pass
 
+class GroupUserAlreadyJoinedError(Exception):
+    """When a user already exists in the group and the db raises an integrety error (due to PK constraint on group_id and user_id)"""
+    pass
+
 class GroupShortDetailsError(Exception):
     """When get_short_group_details service fails"""
     pass

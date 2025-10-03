@@ -10,7 +10,10 @@ from app.db.session import get_db
 from app.db.schemas import GroupCreate, GroupJoinIn, GroupOut, GroupShortOut, GroupInviteOut
 from app.db.models import Group, User, GroupMembers
 from app.services.group_service import get_full_group_details, check_join_group, check_link_join, get_short_group_details, calculate_balance, add_user_group, create_group_invite_service
-from app.core.exceptions import GroupFullDetailsError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError
+from app.core.exceptions import (
+    GroupFullDetailsError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, 
+    GroupInviteLinkCreateError, GroupNotFoundError, GroupUserAlreadyJoinedError
+)
 from app.core.security import get_current_user, get_current_group, GroupContext
 from app.core.logger import get_request_logger
 
@@ -92,6 +95,12 @@ def join_group(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error adding user to group relationship"
+        )
+    except GroupUserAlreadyJoinedError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You already are in this group"
         )
     except GroupCheckLinkJoinError:
         db.rollback()

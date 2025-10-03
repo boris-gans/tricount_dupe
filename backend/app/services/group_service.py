@@ -3,12 +3,16 @@ import secrets
 from datetime import datetime, timezone
 
 from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func
 from urllib.parse import urlparse, parse_qs
 
 from app.db.models import Group, Expense, ExpenseSplit, User, GroupMembers, GroupInvite
 from app.db.schemas import GroupOut, GroupShortOut, GroupInviteOut
-from app.core.exceptions import GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError
+from app.core.exceptions import (
+    GroupFullDetailsError, GroupCalculateBalanceError, GroupCheckPwJoinError, GroupCheckLinkJoinError, 
+    GroupAddUserError, GroupShortDetailsError, GroupInviteLinkCreateError, GroupNotFoundError, GroupUserAlreadyJoinedError
+)
 from app.core.logger import get_module_logger
 
 
@@ -104,8 +108,10 @@ def add_user_group(group_id: int, user: User, db: Session) -> GroupOut:
         db.flush() #best practice; only commit and rollback endpoint as it owns request lifecycle
         db.refresh(new_member)
         return get_full_group_details(group_id=group_id, db=db)
+    except IntegrityError:
+        logger.error("User already added to group")
+        raise GroupUserAlreadyJoinedError
     except Exception as e:
-        db.rollback()
         logger.error(f"Error adding user to group: {e}")
         raise GroupAddUserError from e
 
