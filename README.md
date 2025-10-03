@@ -62,70 +62,16 @@ For reference, the database is implemented with:
 
 ---
 
-### Backend (FastAPI)
+### Setup
+1. Copy `.env.example` → `.env`
+   ```sh
+   cp .env.example .env
 
-1. **Clone the repository**  
-   ```bash
-   git clone https://github.com/boris-gans/tricount_dupe.git
-   cd tricount_dupe/backend
-    ```
-
-2. **Create and activate a virtual environment**
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate   # macOS/Linux
-   .venv\Scripts\activate      # Windows
-    ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
+2. Build the app
+   ```sh
+   docker compose up --build
    ```
 
-4. **Run the backend**
-   ```bash
-   uvicorn app.main:app --reload
-   ```
+Frontend available at: http://localhost:3000
 
-   Backend will be available at `http://127.0.0.1:8000`.
-
-
----
-
-### Frontend (React)
-
-1. **Navigate to the frontend directory**
-
-   ```bash
-   cd tricount_dupe/frontend
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-   or
-
-   ```bash
-   yarn install
-   ```
-
-3. **Run the development server**
-
-   ```bash
-   npm start
-   ```
-
-   or
-
-   ```bash
-   yarn start
-   ```
-
-4. **Access the frontend**
-   Frontend will be running at `http://localhost:3000`.
-
-
----
+API available at: http://localhost:8000
