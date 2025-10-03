@@ -6,9 +6,9 @@ services:
     container_name: tricount-db
     restart: always
     environment:
-      DATABASE_USER: postgres
-      DATABASE_PW: postgres
-      DATABASE_NAME: tricount
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: tricount
     ports:
       - "5432:5432"
     volumes:
@@ -21,7 +21,14 @@ services:
     depends_on:
       - db
     environment:
-      DATABASE_URL: postgresql+psycopg2://postgres:postgres@db:5432/tricount
+      DATABASE_USER: postgres
+      DATABASE_PW: postgres
+      DATABASE_NAME: tricount
+      JWT_SECRET_KEY: supersecret
+      JWT_ALGORITHM: HS256
+      JWT_EXPIRATION_MINUTES: 30
+      LOG_FORMAT: "%(levelname)s | %(message)s"
+      BASE_LOGGER_NAME: tricount
     ports:
       - "8000:8000"
     volumes:
@@ -34,10 +41,10 @@ services:
     depends_on:
       - backend
     ports:
-      - "3000:3000"
-    volumes:
-      - ./frontend:/app
-    command: npm start
+      - "3000:80"
+    # volumes:
+    #   - ./frontend:/app
+    # command: npm start
 
 volumes:
   postgres_data:
