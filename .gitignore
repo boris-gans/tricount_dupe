@@ -17,7 +17,7 @@ frontend/vite.config.js
 *.svg
 .env
 
-ai-prompts.md
+# ai-prompts.md
 
 **/alembic.ini
 **/script.py.mako
