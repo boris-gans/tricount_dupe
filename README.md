@@ -2,6 +2,8 @@
 
 This project is a full-stack web application designed to help individuals both track and split their expenses within a group. It provides a structured backend for data management and a responsive and sleek frontend for user interaction.
 
+Please view the [report](./REPORT.md) for an indepth description of the project and its features.
+
 ---
 
 ## Setup Instructions
@@ -10,8 +12,8 @@ This project is a full-stack web application designed to help individuals both t
 - Git 2.40+
 - Docker Desktop 24+ (includes Docker Compose v2)
 - Optional for local (non-docker) development:
-  - Python 3.11 (matches backend image `python:3.11-slim`)
-  - Node.js 23.x and npm (matches frontend build stage `node:23`)
+  - Python 3.11 (safer for certain packages)
+  - Node.js 23.x and npm
   - Access to a PostgreSQL 15 instance (a container from `docker compose` works)
 
 ### 1. Clone the repository

@@ -3,8 +3,10 @@
 ## Introduction
 This project is a full-stack web application designed to help individuals both track and split their expenses within a group. It provides a structured backend for data management and a responsive and sleek frontend for user interaction.
 
+---
 
 ## Core Features
+
 1. **Group lifecycle API** — [View Endpoint](./backend/app/api/groups.py:23) — Allows users to create, join, and view shared expense groups through REST endpoints.
 
 2. **Expense management API** — [View Endpoint](./backend/app/api/expenses.py:18) — Provides create/edit/delete routes for expenses so group balances stay accurate.
@@ -12,11 +14,15 @@ This project is a full-stack web application designed to help individuals both t
 3. **JWT authentication & authorization** — [View Endpoint](./backend/app/api/auth.py:16) and [View Helpers](./backend/app/core/security.py:33) — Ensures only verified users get tokens and injects the current user into protected routes.
 
 4. **Persistent data layer** — 
-    - [View Models](./backend/app/db/models.py:9) — Maps users, groups, expenses, splits, and group invites to PostgreSQL tables for durable storage. 
+    - [View Models](./backend/app/db/models.py:9) — Maps users, groups, expenses, splits, and group invites to PostgreSQL tables for durable storage
+
+    - [View Schemas](./backend/app/db/schemas.py) - Defines Pydantic schemas for validating request and response models, allowing for easy DB queries and insertions
 
     - [View DB Session](./backend/app/db/session.py:16) - Boots the SQLAlchemy engine with connection retries and exposes a FastAPI dependency for safe transaction handling
 
 5. **UI** - [View App](./frontend/src/App.jsx) - Defines the Vite app ...
+
+---
 
 ## Feature Catalog
 
@@ -36,23 +42,47 @@ This project is a full-stack web application designed to help individuals both t
 
 8. **Test suite** — [View Tests](./backend/tests/) — Verifies all backend functionality, including all API routes, all services, and all security utils (password hashing, token expiry and group access rules)
 
+---
+
 ## Tech Stack
 
+1. **FastAPI** — For easily creating REST endpoints with dependency injection functionality
+
+2. **SQLAlchemy ORM** —  Manages PostgreSQL connection and allows for easy querying
+
+3. **Pydantic & pydantic-settings** — [View Schemas](./backend/app/db/schemas.py) — Validate request/response bodies and load environment configuration
+
+4. **Passlib** — For pw hashing and verifacation using Argon2/Bcrypt
+
+5. **python-jose** — Encodes/decodes JWTs for dependency injections
+
+6. **Uvicorn** — Runs the FastAPI app in production-ready ASGI mode
+
+7. **pytest** —  Drives automated backend unit tests
+
+8. **React + Vite** — Powers the frontend consuming the API
+
+9. **Tailwind CSS** —  Provides utility-first styling for UI components
+
+10. **shadcn/ui** - Provided reusable and well designed components for quick frontend development
+    - [https://ui.shadcn.com/]
+
+11. **Docker Compose** — Orchestrates PostgreSQL, backend, and frontend services for local parity
+
+12. **Alembic** - For performing data migrations during development
+
+---
+
+## Software Design Patterns Used
+
+1. **Singleton** - [View Implementation](./backend/app/core/logger.py:9) - `setup_logging` ensures the base logger instance is configured and initialized only once, allowing it to be reused. 
+
+2. **Factory** - [View Implementation](./backend/app/services/group_service.py) - `create_group_invite_service` constructs fully initialized GroupInvite aggregates before adding to db
+
+3. **Proxy** - [View Implementation](./backend/app/core/security.py) - `get_current_group` and `get_current_user` stand between API routes and the database, denying access when users don't exist or aren't group members
 
 
-
-### Technologies Used
-- **Backend:** FastAPI (Python), SQLAlchemy (ORM), Pydantic (data validation & schemas), PostgreSQL (database), Alembic (database migrations)
-- **Frontend:** React (JavaScript), Vite
-- **Other Tools:** ERD for database design, Local Storage for persisting user data  
-
-
-### Features
-- User + Group creation and authentication  
-- Persistent user sessions via local storage  
-- Database integration with SQLAlchemy models  
-- API endpoints defined with FastAPI and validated with Pydantic  
-- Database migrations for updating schema using Alembic
+These are just a few examples of many in my codebase, as these basic design patterns are fundamental building blocks in software architecture. So, they often emerge naturally in well-structured codebases without needing to be explicitly implemented or labeled.
 
 ---
 
@@ -60,29 +90,125 @@ This project is a full-stack web application designed to help individuals both t
 This project follows the **Iterative Model** of the SDLC.  
 
 ### Why Iterative?
-- Initial planning and design were done (system architecture, ERD, schemas)
-- I began coding early to get a working prototype as soon as possible
-- Development continues in small cycles: implement → test → refine → repeat
+The iterative model emphasizes builidng in small function increments, allowing for continious refinement through feedback and testing. Rather than trying to think of and decide everything upfront, I prefer to just start coding. This allows me to test ideas quickly and evolve my architecture and features over time. This was especially perfect for my project as the amount and scale of certain features evolved quickly as I started. For example, since I got started on the Frontend early I was able to identfiy the need (and also convenience) of authentication persistence. I therefore was able to implement my JWT and dependencies early on, which required changes to both the db schema and nearly every endpoint.
 
-This approach balances planning with flexibility, which works best for my workflow and the scale of this project. I personally find it difficult to imagine the entire application and it's requirements at first, therefore I'd rather start developing ASAP and refine features later on.
-
-**My Steps:**
-1. Decide on backend + frontend technologies and create file structrue (with simple comments describing the purpose of each file)
-2. Create first draft of ERD
-3. Implement this on SQLAlchemy
-4. Create rough draft of input and output models using Pydantic
-5. Test app setup by creating the first simple API's (entity creation)
-6. Quickly test these on the frontend by implementing simple API calls without any design
-7. ...
+**can add steps if needed**
 
 ---
 
+## Architecture Overview
+
+```mermaid
+graph TD
+    %% ===================
+    %%  USERS / CLIENT SIDE
+    %% ===================
+    A[User Browser] -->|"HTTP port 3000"| B[Frontend: React / Vite / Nginx]
+
+    %% ===================
+    %%  FRONTEND
+    %% ===================
+    B -->|"REST API Calls - port 8000"| C[Backend: FastAPI / Uvicorn]
+
+    %% ===================
+    %%  BACKEND
+    %% ===================
+    C -->|"SQL Queries - port 5432"| D[(PostgreSQL Database)]
+
+    %% ===================
+    %%  DATA VOLUME
+    %% ===================
+    D --- E[(postgres_data Volume)]
+
+    %% ===================
+    %%  STYLES
+    %% ===================
+    classDef container fill:#f1f8e9,stroke:#2e7d32,stroke-width:1px,rx:6px,ry:6px,color:#000;
+    classDef db fill:#e3f2fd,stroke:#1565c0,stroke-width:1px,rx:6px,ry:6px,color:#000;
+    classDef volume fill:#fff3e0,stroke:#ef6c00,stroke-width:1px,rx:6px,ry:6px,color:#000;
+
+    class B,C container
+    class D db
+    class E volume
+```
+
+
+
+---
 
 ## Database Design
-Below is where the **Entity Relationship Diagram (ERD)** will be added to illustrate the database structure:
+Below is the **Entity Relationship Diagram (ERD)** representing my database schema, which is defined in [View Models](/backend/app/db/models.py):
 
-![ERD Placeholder](docs/erd_1.png)
+```mermaid
+erDiagram
+    %% === CORE ENTITIES (Top Row) ===
+    USER {
+        int id PK
+        string name
+        string pw
+        string email
+    }
 
-For reference, the database is implemented with:
-- **Pydantic Schemas** for data validation [View Pydantic Schema](./backend/app/db/schemas.py)
-- **SQLAlchemy Models** for persistence [View DB Schema](./backend/app/db/models.py)
+    GROUP {
+        int id PK
+        string name
+        string pw
+        text emoji
+    }
+
+    %% === ASSOCIATIVE ENTITIES (Middle Row) ===
+    GROUP_MEMBERS {
+        int user_id PK, FK
+        int group_id PK, FK
+    }
+
+    GROUP_INVITE {
+        int id PK
+        string token
+        int group_id FK
+        int created_by_id FK
+        datetime expires_at
+        bool used
+        datetime created_at
+    }
+
+    %% === TRANSACTIONAL ENTITIES (Bottom Row) ===
+    EXPENSE {
+        int id PK
+        float amount
+        string description
+        int group_id FK
+        int paid_by_id FK
+        int created_by_id FK
+    }
+
+    EXPENSE_SPLIT {
+        int id PK
+        int expense_id FK
+        int user_id FK
+        float amount
+    }
+
+    %% === RELATIONSHIPS ===
+    %% Core membership relationships
+    USER ||--o{ GROUP_MEMBERS : "member of"
+    GROUP ||--o{ GROUP_MEMBERS : "has members"
+
+    %% Invites (just below membership)
+    GROUP ||--o{ GROUP_INVITE : "has invites"
+    USER ||--o{ GROUP_INVITE : "created_by"
+
+    %% Expenses (lower row)
+    GROUP ||--o{ EXPENSE : "has expenses"
+    USER ||--o{ EXPENSE : "paid_by"
+    USER ||--o{ EXPENSE : "created_by"
+
+    EXPENSE ||--o{ EXPENSE_SPLIT : "has splits"
+    USER ||--o{ EXPENSE_SPLIT : "owes share"
+
+```
+
+## Test Results
+
+
+# Appendix
