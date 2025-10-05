@@ -140,11 +140,7 @@ FAILED tests/services/test_group_service.py::test_create_group_invite_service_fa
 
 ## Architecture Overview
 
-<!-- ![Architecture Diagram](/docs/arch-1.png) -->
-
-<br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br>
+![Architecture Diagram](/docs/arch-1.png)
 
 
 Below you can see a description of each API endpoint.
@@ -165,17 +161,12 @@ Below you can see a description of each API endpoint.
 
 <p>*Note: The JWT token is included in the header for all endpoints, other than the /auth ones. I can therefore access the current user object in all private endpoints, and a Request Schema is therefore sometimes not needed*<p>
 
-
 ---
 
 ## Database Design
 Below is the **Entity Relationship Diagram (ERD)** representing my database schema, which is defined in [View Models](/backend/app/db/models.py):
 
-<!-- ![Architecture Diagram](/docs/erd-1.png) -->
-
-<br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br>
-<br><br><br><br><br><br><br>
+![Architecture Diagram](/docs/erd-1.png)
 
 
 # Appendix
