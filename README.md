@@ -18,7 +18,7 @@ Please view the [report](./REPORT.md) for an indepth description of the project 
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/<your-org>/tricount_dupe.git
+git clone https://github.com/boris-gans/tricount_dupe.git
 cd tricount_dupe
 ```
 
