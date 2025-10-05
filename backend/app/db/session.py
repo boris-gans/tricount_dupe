@@ -1,12 +1,34 @@
 # DBSession object; manages connections
-from sqlalchemy import create_engine
+import time
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.exc import OperationalError
 
 from app.db.base import Base
 from app.core.config import settings
 from app.db import models #to create tables if neccecesary
+from logging import Logger
 
-engine = create_engine(settings.database_url, echo=False)
+MAX_RETRIES=10
+WAIT_SECONDS=2
+
+
+for attempt in range(1, MAX_RETRIES + 1):
+    try:
+        # logger.info(f"Attempt {attempt}/{MAX_RETRIES}: connecting to database...")
+        engine = create_engine(settings.database_url, echo=False)
+        # Test connection
+        with engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        # logger.info("✅ Database connection successful.")
+        break
+    except OperationalError as e:
+        # logger.warning(f"❌ Database not ready ({e}); retrying in {WAIT_SECONDS}s...")
+        time.sleep(WAIT_SECONDS)
+else:
+    raise RuntimeError(f"❌ Could not connect to the database after {MAX_RETRIES} attempts.")
+
+# engine = create_engine(settings.database_url, echo=False)
 Base.metadata.create_all(engine) #create tables if it doesn't exist
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

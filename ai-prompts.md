@@ -49,3 +49,153 @@ Now that im done with both my frontend and backend, I want to create unit tests 
 
 **Response:**
 Built out automated test coverage for the FastAPI backend. Added a shared testing harness with in‑memory SQLite, dependency overrides, and reusable auth helpers (backend/tests/conftest.py:1). Wrote unit tests for hashing/JWT helpers plus user/group dependencies (backend/tests/test_security.py:1), service-level coverage for expenses (backend/tests/services/test_expense_service.py:1) and groups (backend/tests/services/test_group_service.py:1), and end-to-end API exercises for auth (backend/tests/api/test_auth_endpoints.py:1), groups (backend/tests/api/test_group_endpoints.py:1), and expenses (backend/tests/api/test_expense_endpoints.py:1). Attempted to run pytest with coverage, but dependency installation was blocked; recommend pip install -r backend/requirements.txt and then running cd backend && pytest --cov=app --cov-report=term-missing tests when you’re ready.
+
+
+## 6 (ChatGBT)
+I see the db being intiialzied from the sql script, but the backend is failing to intialzie cause it tries to connect to the db while its not ready (still building). SO the last log I get in docker is that the database is ready to accept connections but the backend has already failed. How can I make sure the backend waits for the database to be done? Heres the entire docker compose: (...)
+
+**Reponse:**
+Excellent — this is *the* classic Docker timing problem 👏
+
+Your diagnosis is spot on: **Postgres finishes initializing slightly after your backend tries to connect**, so FastAPI fails on startup.
+
+---
+
+## 🧠 Why this happens
+
+* `depends_on` in Compose **only waits for the container to start**, not for it to be *ready to accept connections*.
+* Postgres containers print “database system is ready to accept connections” a few seconds after starting.
+* Meanwhile, your backend launches instantly, hits the DB, and fails.
+
+---
+
+## ✅ Solution options
+
+### **Option 1 (Best Practice): use a “wait-for-db” entrypoint script**
+
+You add a small shell script that waits until Postgres is ready before starting FastAPI.
+
+---
+
+### 🧩 Step 1. Create a file `backend/wait-for-db.sh`
+
+```bash
+#!/bin/sh
+# wait-for-db.sh
+
+set -e
+
+host="db"
+shift
+
+until pg_isready -h "$host" -p 5432 -U "postgres" > /dev/null 2>&1; do
+  echo "⏳ Waiting for Postgres at $host:5432..."
+  sleep 1
+done
+
+echo "✅ Postgres is ready — starting app!"
+exec "$@"
+```
+
+Make it executable:
+
+```bash
+chmod +x backend/wait-for-db.sh
+```
+
+---
+
+### 🧩 Step 2. Update your backend Dockerfile
+
+You need `postgresql-client` installed to get the `pg_isready` command:
+
+```dockerfile
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies needed for psycopg2 + pg_isready
+RUN apt-get update && apt-get install -y \
+    libpq-dev \
+    postgresql-client \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Default command: wait for DB then run app
+CMD ["./wait-for-db.sh", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+```
+
+---
+
+### 🧩 Step 3. Update your docker-compose.yml
+
+Remove the `command` line from backend (Dockerfile now handles it):
+
+```yaml
+backend:
+  build: ./backend
+  container_name: tricount-backend
+  depends_on:
+    - db
+  environment:
+    DATABASE_USER: postgres
+    DATABASE_PW: postgres
+    DATABASE_NAME: tricount
+    JWT_SECRET_KEY: supersecret
+    JWT_ALGORITHM: HS256
+    JWT_EXPIRATION_MINUTES: 30
+    LOG_FORMAT: "%(levelname)s | %(message)s"
+    BASE_LOGGER_NAME: tricount
+  ports:
+    - "8000:8000"
+  volumes:
+    - ./backend:/app
+```
+
+---
+
+### 🧩 Step 4. Rebuild & run
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
+You’ll now see logs like:
+
+```
+backend  | ⏳ Waiting for Postgres at db:5432...
+db       | database system is ready to accept connections
+backend  | ✅ Postgres is ready — starting app!
+```
+
+🎉 FastAPI will only start once Postgres actually accepts connections.
+
+---
+
+### **Option 2 (simpler, not as robust): retry logic inside backend**
+
+You could add a retry loop in your FastAPI startup event to wait for DB connection.
+But the `wait-for-db.sh` approach is cleaner and keeps your codebase portable.
+
+---
+
+✅ **Summary**
+
+* Add `wait-for-db.sh` to your backend.
+* Install `postgresql-client` in Dockerfile.
+* Start backend with that script as entrypoint.
+
+Your professor will never see a “DB not ready” error again — the stack will start cleanly every time 🚀
+
+---
+
+Would you like me to also show you how to print **color-coded logs** (“Waiting for DB… ✅ Ready!” in green/yellow) so it’s extra readable in Docker output?
+
+### What I did:
+I ended up going for option 2 with retry logic. I felt it was cleaner and that retry logic is something crucial so I may as well add it.
