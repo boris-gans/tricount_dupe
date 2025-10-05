@@ -30,3 +30,31 @@ There are two ways to run the project locally
 Frontend available at: http://localhost:3000
 
 API available at: http://localhost:8000
+
+
+
+## users
+Boris Gans
+borisgans@gmail.com
+1
+
+Matt Porteous
+mp@gmail.com
+1
+
+Ryan M
+rm@gmail.com
+1
+
+Borja Serra Planelles
+borja@gmail.com
+
+## groups
+Apartment
+1
+
+Spring Break
+1
+
+AWS
+1
