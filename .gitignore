@@ -14,15 +14,17 @@ __pycache__/
 
 .venv
 
-# *.svg
 .env
 
-# ai-prompts.md
+ai-prompts.md
 
 **/alembic.ini
 **/script.py.mako
 **/migrations/versions/
 **/migrations/README
 **/.coverage
+**/.pytest_cache
+
 
 **.pdf
+**.svg
