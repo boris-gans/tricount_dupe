@@ -24,3 +24,5 @@ __pycache__/
 **/migrations/versions/
 **/migrations/README
 **/.coverage
+
+**.pdf
