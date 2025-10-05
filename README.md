@@ -66,7 +66,9 @@ docker compose down
 ### Running the tests
 - **Backend with Docker:**
   ```bash
-  docker compose run --rm backend pytest
+  docker compose build
+  docker compose up -d
+  docker compose exec backend pytest --cov=app --cov-report=term-missing
   ```
 - **Backend locally:** (from `backend` virtualenv)
   ```bash
