@@ -92,23 +92,16 @@ This project follows the **Iterative Model** of the SDLC.
 ### Why Iterative?
 The iterative model emphasizes builidng in small function increments, allowing for continious refinement through feedback and testing. Rather than trying to think of and decide everything upfront, I prefer to just start coding. This allows me to test ideas quickly and evolve my architecture and features over time. This was especially perfect for my project as the amount and scale of certain features evolved quickly as I started. For example, since I got started on the Frontend early I was able to identfiy the need (and also convenience) of authentication persistence. I therefore was able to implement my JWT and dependencies early on, which required changes to both the db schema and nearly every endpoint.
 
-**can add steps if needed**
+### My Steps
+
+* **Definition & Setup:** Established the project’s purpose and chose the core technologies — FastAPI and SQLAlchemy for the backend, and React with Vite for the frontend.
+* **Database Design:** Created an ERD to map relationships, then implemented it using SQLAlchemy models.
+* **API & Schema Initialization:** Defined Pydantic schemas and initial route structure to support entity creation and retrieval.
+* **Early Prototype:** Deployed a minimal backend to test functionality and database interactions through simple API calls.
+* **Frontend Integration:** Built a lightweight frontend interface to interact with these endpoints, focusing on data flow rather than visual design.
+* **Iteration:** Gradually refined each component — improving validation, authentication, and UI — in repeated cycles of **implement → test → adjust**.
 
 ---
-
-## Architecture Overview
-
-![Architecture Diagram](/docs/arch-1.png)
-
-
-
----
-
-## Database Design
-Below is the **Entity Relationship Diagram (ERD)** representing my database schema, which is defined in [View Models](/backend/app/db/models.py):
-
-![Architecture Diagram](/docs/erd-1.png)
-
 
 ## Test Results
 I've implemented unit tests for my backend with 90% coverage and 98.2% accuracy. To run these tests yourself, view the [setup instructions](./README.md:9) and [test instructions](./README.md:66) in the README.
@@ -142,6 +135,48 @@ Coverage HTML written to dir htmlcov
 FAILED tests/services/test_group_service.py::test_create_group_invite_service_failure - RuntimeError: persist failed
 ================= 1 failed, 55 passed, 50 warnings in 1.80s =======================
 ```
+
+--- 
+
+## Architecture Overview
+
+<!-- ![Architecture Diagram](/docs/arch-1.png) -->
+
+<br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
+
+
+Below you can see a description of each API endpoint.
+
+| Method | Path | Request Schema | Response Schema | Purpose |
+| --- | --- | --- | --- | --- |
+| POST | `/auth/signup` | `UserCreate` | `AuthOut` | Register a new account and issue a JWT. |
+| POST | `/auth/login` | `UserLogin` | `AuthOut` | Authenticate an existing user and return a JWT. |
+| POST | `/groups/create` | `GroupCreate` | `GroupOut` | Create a new expense group owned by the requester. |
+| POST | `/groups/join` | `GroupJoinIn` | `GroupOut` | Join an existing group via password or invite link. |
+| GET | `/groups/view-short` | _None_ | `list[GroupShortOut]` | List the groups the current user belongs to. |
+| GET | `/groups/{group_id}` | _Path param:_ `group_id` | `GroupOut` | Retrieve full details for a single group. |
+| GET | `/groups/{group_id}/create-invite` | _Path param:_ `group_id` | `GroupInviteOut` | Generate a short-lived invite link for the group. |
+| POST | `/expenses/{group_id}/create-expense` | `ExpenseCreate` | `ExpenseOut` | Create a new expense inside the target group. |
+| POST | `/expenses/{group_id}/edit-expense` | `ExpenseUpdate` | `ExpenseOut` | Update an existing group expense and its splits. |
+| POST | `/expenses/{group_id}/delete-expense` | `ExpenseDelete` | `dict` (`{"msg": "Expense deleted"}`) | Remove an expense from the group. |
+
+
+<p>*Note: The JWT token is included in the header for all endpoints, other than the /auth ones. I can therefore access the current user object in all private endpoints, and a Request Schema is therefore sometimes not needed*<p>
+
+
+---
+
+## Database Design
+Below is the **Entity Relationship Diagram (ERD)** representing my database schema, which is defined in [View Models](/backend/app/db/models.py):
+
+<!-- ![Architecture Diagram](/docs/erd-1.png) -->
+
+<br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
+<br><br><br><br><br><br><br>
+
 
 # Appendix
 
