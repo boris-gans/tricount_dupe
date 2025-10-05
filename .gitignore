@@ -26,5 +26,6 @@ ai-prompts.md
 **/.pytest_cache
 
 
-**.pdf
+# **.pdf
 **.svg
+**.png
